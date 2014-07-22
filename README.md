@@ -1,4 +1,12 @@
 dailymile_export
 ================
 
-Export entries from dailymile
+Export entries from dailymile using the API.
+
+http://www.dailymile.com/api/documentation
+
+
+Why?  The built-in export feature of dailymile is abysmal.
+
+
+Requires:  TBD
