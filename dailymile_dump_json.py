@@ -1,23 +1,36 @@
 import json
 import requests
-import datetime
+import time
+import calendar
 
+# CONFIGURABLES
 
+# dailymile user name
 dm_user="danstoner"
 
-# start date is 2010-01-01  (january 1, 2010)
-start_date = (2010,1,1).datetime
+# earliest date entry to fetch in format YYYY-MM-DD
+start_date = "2010-01-01"
 
-print start_date
+
+# CODE
+
+# API needs unix time aka ticks since the epoch
+# See:
+#  https://www.dailymile.com/forums/bugs-and-support/topics/11340-api-question-about-getting-events-since-certain-date
+#  http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
+# Example: January 1, 2010 or 2010-01-01 would become "1262304000"
+date_since = str(calendar.timegm(time.strptime(start_date,"%Y-%m-%d")))
+
 
 exit
 
-# API needs unix time seconds since the epoch
-# See:
-# https://www.dailymile.com/forums/bugs-and-support/topics/11340-api-question-about-getting-events-since-certain-date
-date_since="1262304000"
+api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?since=" + date_since
 
+r = requests.get(api_url_entries)
 
-
-api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json"
+if r.status_code != 200:
+    print "Did not get HTTP 200! Exiting."
+    exit
+else:
+    print r.content
 
