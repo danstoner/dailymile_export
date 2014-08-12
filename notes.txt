@@ -1,0 +1,72 @@
+Some examples and poking at the API...
+
+
+# api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?since=" + date_since
+
+
+dstoner@dstoner-ultra:~/git/dailymile_export$ python dailymile_dump_json.py  | json_pp | grep entries
+   "entries" : [
+         "url" : "http://www.dailymile.com/entries/29992867",
+         "url" : "http://www.dailymile.com/entries/29992843",
+         "url" : "http://www.dailymile.com/entries/29988481",
+         "url" : "http://www.dailymile.com/entries/29976977",
+         "url" : "http://www.dailymile.com/entries/29974068",
+         "url" : "http://www.dailymile.com/entries/29903274",
+         "url" : "http://www.dailymile.com/entries/29889630",
+         "url" : "http://www.dailymile.com/entries/29889510",
+         "url" : "http://www.dailymile.com/entries/29860263",
+         "url" : "http://www.dailymile.com/entries/29849415",
+         "url" : "http://www.dailymile.com/entries/29849408",
+         "url" : "http://www.dailymile.com/entries/29843386",
+         "url" : "http://www.dailymile.com/entries/29838969",
+         "url" : "http://www.dailymile.com/entries/29832008",
+         "url" : "http://www.dailymile.com/entries/29806077",
+         "url" : "http://www.dailymile.com/entries/29793599",
+         "url" : "http://www.dailymile.com/entries/29793559",
+         "url" : "http://www.dailymile.com/entries/29752074",
+         "url" : "http://www.dailymile.com/entries/29752056",
+         "url" : "http://www.dailymile.com/entries/29734621",
+
+
+
+
+Calls to a URL via curl seem to return json rather than an html page.
+
+$ curl -s  http://www.dailymile.com/entries/29992867/
+{"id":29992867,"url":"http://www.dailymile.com/entries/29992867","at":"2014-08-11T17:44:30Z","message":"A cool rain came just when I was ready to start these which was good for comfort but bad for footing / slippage on the hill.","comments":[],"likes":[],"location":{"name":"Gainesville, FL"},"user":{"username":"danstoner","display_name":"Dan S.","photo_url":"http://s3.dmimg.com/pictures/users/93956/1404487395_avatar.jpg","url":"http://www.dailymile.com/people/danstoner"},"workout":{"activity_type":"Running","distance":{"value":0.5,"units":"miles"},"felt":"alright","title":"Steep hill sprints x 6"}}
+
+In a browser the above will get redirect to:
+
+http://www.dailymile.com/people/danstoner/entries/29992867
+
+
+Same entry via API:
+
+$ curl -s https://api.dailymile.com/entries/29992867.json
+{"id":29992867,"url":"http://www.dailymile.com/entries/29992867","at":"2014-08-11T17:44:30Z","message":"A cool rain came just when I was ready to start these which was good for comfort but bad for footing / slippage on the hill.","comments":[],"likes":[],"location":{"name":"Gainesville, FL"},"user":{"username":"danstoner","display_name":"Dan S.","photo_url":"http://s3.dmimg.com/pictures/users/93956/1404487395_avatar.jpg","url":"http://www.dailymile.com/people/danstoner"},"workout":{"activity_type":"Running","distance":{"value":0.5,"units":"miles"},"felt":"alright","title":"Steep hill sprints x 6"}}
+
+
+
+The API does not provide gear for each run but it is available with parsing difficulty from each "entry" and the workout_data endpoint.
+
+$ curl -s https://www.dailymile.com/people/danstoner/entries/28601037/workout_data
+<dl id="workout_details" class="details left">
+  <dt>Gear</dt>
+  <dd>
+    <ul class="keyword_list">
+      <li><a href="#" onclick="javascript: return false"><span>Altra Samson</span></a></li>
+    </ul>
+  </dd>
+  <dt style="display: none">Effort</dt>
+  <dd style="display: none">
+    <ul class="effort-rating" style="display: block">
+      <li class="current-rating" style="width: 80%;">Currently 4/5 Effort.</li>
+    </ul>
+  </dd>
+  <dt style="display: none">Calories</dt>
+  <dd style="display: none">
+    1075
+  </dd>
+</dl>
+<div class="clearl empty_div"></div>
+
