@@ -25,8 +25,6 @@ start_date = "2012-01-01"
 date_since = str(calendar.timegm(time.strptime(start_date,"%Y-%m-%d")))
 
 
-exit
-
 # Will just need to page through every single entry starting with page 1 until there
 # are no more pages.
 
@@ -47,7 +45,7 @@ while True:
     r = s.get(api_url_entries)
     if r.status_code != 200:
         print "Did not get HTTP 200! Exiting."
-        exit
+        break
     else:
         for each in r.json()["entries"]:
             print each["id"]
