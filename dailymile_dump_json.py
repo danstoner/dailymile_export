@@ -42,13 +42,18 @@ s = requests.Session()
 api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
 
 #r = requests.get(api_url_entries)
-r = s.get(api_url_entries)
 
-if r.status_code != 200:
-    print "Did not get HTTP 200! Exiting."
-    exit
-else:
-    for each in r.json()["entries"]:
-        print each["id"]
+while True:
+    r = s.get(api_url_entries)
+    if r.status_code != 200:
+        print "Did not get HTTP 200! Exiting."
+        exit
+    else:
+        for each in r.json()["entries"]:
+            print each["id"]
+        page+=1
+        api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
+        if page > 5:    # stop after 5 pages for testing purposes
+            break
 
 
