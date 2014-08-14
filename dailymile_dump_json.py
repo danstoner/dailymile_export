@@ -3,13 +3,16 @@ import requests
 import time
 import calendar
 
-# CONFIGURABLES
 
+# CONFIGURABLES
+ 
 # dailymile user name
 dm_user="danstoner"
 
-# earliest date entry to fetch in format YYYY-MM-DD
-start_date = "2010-01-01"
+## Pretty sure that the "since" parameter does not actually work in the API. I could not get 
+## unix timestamp to affect the results of the API calls in any way.
+# Earliest date entry to fetch in format YYYY-MM-DD
+start_date = "2012-01-01"
 
 
 # CODE
@@ -24,23 +27,28 @@ date_since = str(calendar.timegm(time.strptime(start_date,"%Y-%m-%d")))
 
 exit
 
-api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?since=" + date_since
+# Will just need to page through every single entry starting with page 1 until there
+# are no more pages.
 
-# r = requests.get(api_url_entries)
+#api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?since=" + date_since
 
-# getting back restuls from API but this is not getting the "since 2010" part right.
-
-s = requests.Session()
 
 # start at page 1 and go until we stop getting HTTP ok
 
 page = 1
 
+s = requests.Session()
+
+api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
+
+#r = requests.get(api_url_entries)
 r = s.get(api_url_entries)
 
 if r.status_code != 200:
     print "Did not get HTTP 200! Exiting."
     exit
 else:
-    print r.content
+    for each in r.json()["entries"]:
+        print each["id"]
+
 
