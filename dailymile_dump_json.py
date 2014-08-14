@@ -26,10 +26,17 @@ exit
 
 api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?since=" + date_since
 
-r = requests.get(api_url_entries)
+# r = requests.get(api_url_entries)
 
 # getting back restuls from API but this is not getting the "since 2010" part right.
 
+s = requests.Session()
+
+# start at page 1 and go until we stop getting HTTP ok
+
+page = 1
+
+r = s.get(api_url_entries)
 
 if r.status_code != 200:
     print "Did not get HTTP 200! Exiting."
