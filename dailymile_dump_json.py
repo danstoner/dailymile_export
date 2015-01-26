@@ -3,9 +3,13 @@ import requests
 import time
 import calendar
 import logging
+import csv
+
 
 # CONFIGURABLES
- 
+
+#TODO convert these to runtime parameters
+
 # dailymile user name
 dm_user="danstoner"
 
@@ -14,14 +18,13 @@ dm_user="danstoner"
 #### start_date = "2010-01-01"
 
 
-
+# log everything for now
 logging.basicConfig(level=logging.DEBUG)
+
 
 # API needs unix time aka ticks since the epoch
 # See:
 #  http://www.dailymile.com/api/documentation
-#  https://www.dailymile.com/forums/bugs-and-support/topics/11340-api-question-about-getting-events-since-certain-date
-#  http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
 #  http://www.unixtimestamp.com/
 # Example: January 1, 2010 or 2010-01-01 would become "1262304000"
 # 1262304000 01/01/2010 @ 12:00am (UTC)
@@ -29,14 +32,14 @@ logging.basicConfig(level=logging.DEBUG)
 # 1325376000 01/01/2012 @ 12:00am (UTC)
 # 1356998400 01/01/2013 @ 12:00am (UTC)
 # 1388534400 01/01/2014 @ 12:00am (UTC)
-# 1422280800 01/26/2015 @ 2:00pm (UTC)  ... now 9am EST
+# 1420070400 01/01/2015 @ 12:00am (UTC)
 
 #### date_since = str(calendar.timegm(time.strptime(start_date,"%Y-%m-%d")))
 
 # At some point will probably need to fetch by year due to the number of
 # workouts / connections required to get all of the data.
 # Until then, we will just start at page 1 and keep paging until there
-# are no more pages. This is actually reasonable for a "full export" anyway
+# are no more pages. This is actually reasonable for a "full export" anyway.
 #
 # dailymile currently caps at 1500 requests per hour.
 
@@ -46,7 +49,7 @@ page = 1
 
 ###### API fields
 
-# Sample API response
+# Sample API request and response
 # $ curl -s  "https://api.dailymile.com/people/danstoner/entries.json?since=1420934400&until=1421020800" | json_pp
 # {
 #    "entries" : [
@@ -109,7 +112,11 @@ page = 1
 # }
 
 
+
+
 # BEGIN
+
+entry_dict = dict()
 
 s = requests.Session()
 
@@ -126,7 +133,8 @@ r = s.get(api_url_entries)
 while r.status_code == 200:
     r_json=r.json()
     for entry in r_json["entries"]:
-        print entry["workout"]["title"]
+        row = list(entry_dict[entry["id"]])
+        entry_dict[entry["id"]] = row.insert
 #        print r_json["id"]
 #        for each in r.json()["entries"]:
 #            print each["id"]
@@ -146,3 +154,4 @@ while r.status_code == 200:
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
 
+print entry_dict
