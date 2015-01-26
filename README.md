@@ -11,6 +11,8 @@ http://www.dailymile.com/api/documentation
 Why?  The built-in export feature of dailymile is abysmal.
 
 
-Requires:  
+Required libs:  
+
 	   requests
 	   json
+           csv
