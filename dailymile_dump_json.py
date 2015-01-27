@@ -116,9 +116,26 @@ page = 1
 
 # BEGIN
 
+# if we cannot open the output file might as well stop work here.
+header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
+outputfile = dm_user+"_dailymile_export."+str(time.time())+".csv"
+with open(outputfile,"w") as f:
+    writer = csv.writer(f)
+    writer.writerow(header)
+
+
+
 entry_dict = dict()
 
 s = requests.Session()
+
+
+###
+### Will need to iterate through days since a start date using "since" and "until"
+### rather than paging.
+### Using the API "page" parameter does not guarantee getting every entry, 
+### nor does it guarantee getting every entry only once.
+###
 
 # sample url for page 1 would be:
 # https://api.dailymile.com/people/danstoner/entries.json?page=1
@@ -130,47 +147,40 @@ logging.info("First API Request: " + api_url_entries)
 
 r = s.get(api_url_entries)
 
-fields = [
-    ["url"],
-    ["at"],
-    ["workout","title"],
-    ["message"],
-    ["workout","activity_type"],
-    ["workout","felt"],
-    ["workout","duration"],
-    ["workout","distance","value"],
-    ["workout","distance","units"]
-]
-
 #raise SystemExit
-
-# use....
-#    get(key[,default])
-# which should not raise KeyError on missing json fields
 
 while r.status_code == 200:
     r_json=r.json()
     for entry in r_json["entries"]:
+        # Every JSON record seems to include "id", "url", and "at"
         id = entry["id"]
+        # assuming that paging through the API will not fetch a duplicate ID
+        if id in entry_dict:
+            logging.error("**ERROR** Duplicate ID: " + str(id))
+            break
         entry_dict[id] = []
         entry_dict[id].append(id)
         entry_dict[id].append(entry.get("url"))
         entry_dict[id].append(entry.get("at"))
-        try:
-            entry_dict[id].append(entry["workout"].get("title"))
-        except:
-            entry_dict[id].append("")
-            logging.warning("Problem in ID: " + str(id))
-        entry_dict[id].append(entry.get("message"))
-        entry_dict[id].append(entry["workout"].get("activity_type"))
-        entry_dict[id].append(entry["workout"].get("felt"))
-        entry_dict[id].append(entry["workout"].get("duration"))
-        # hope and pray that every workout has a distance field
-        entry_dict[id].append(entry["workout"]["distance"].get("value"))
-        entry_dict[id].append(entry["workout"]["distance"].get("units"))
+        # The JSON record does not always include every field
+        try: entry_dict[id].append(entry["workout"].get("title"))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(entry["workout"]["activity_type"])
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(entry["workout"]["felt"])
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(entry["workout"]["duration"])
+        except: entry_dict[id].append(None)
+        try: entry_dict[id].append(entry["workout"]["distance"]["value"])
+        except: entry_dict[id].append(None)
+        try: entry_dict[id].append(entry["workout"]["distance"]["units"])
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(entry.get("message"))
+        except: entry_dict[id].append("")
+
 
     page+=1
-    if page > 25:    # stop after 5 pages for testing purposes
+    if page > 100:
         break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
@@ -186,5 +196,25 @@ while r.status_code == 200:
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
 
-for id in entry_dict:   
-    print entry_dict[id][0]
+#for id in entry_dict:   
+#    print entry_dict[id][0]
+
+# append dict data to CSV                                                                                                            
+with open(outputfile,"a") as f:
+    writer = csv.writer(f)
+    # for key in entry_dict:
+    for key in entry_dict:
+        for column in entry_dict[key]:
+            try: column = str(column).encode('utf-8')
+            except: logging.error("Could not write: " + str(entry_dict[key]))
+            print column
+#        writer.writerow(entry_dict[key])
+
+
+### Current ERROR.  Probably copy and pasted this quote into dm. Tempted to edit the entry and fix it in the source data.
+
+# ERROR:root:Could not write: [3368456, u'http://www.dailymile.com/entries/3368456', u'2010-09-19T22:34:39Z', '', '', '', None, None, '', u'Read "Running to the Top" by Arthur Lydiard. He would say that I do not yet have sufficient endurance base to start cranking out speed workouts. He has a nice rant about excessively supportive running shoes and orthotics (although he seems to be a supporter of heal striking) and says:  "If you could just attach a rubber sole to your foot, with nothing on the top, you\u2019d have the perfect running shoe."']
+# Traceback (most recent call last):
+#   File "dailymile_dump_json.py", line 210, in <module>
+#     writer.writerow(entry_dict[key])
+# UnicodeEncodeError: 'ascii' codec can't encode character u'\u2019' in position 369: ordinal not in range(128)
