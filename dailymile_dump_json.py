@@ -130,21 +130,53 @@ logging.info("First API Request: " + api_url_entries)
 
 r = s.get(api_url_entries)
 
+fields = [
+    ["url"],
+    ["at"],
+    ["workout","title"],
+    ["message"],
+    ["workout","activity_type"],
+    ["workout","felt"],
+    ["workout","duration"],
+    ["workout","distance","value"],
+    ["workout","distance","units"]
+]
+
+#raise SystemExit
+
+# use....
+#    get(key[,default])
+# which should not raise KeyError on missing json fields
+
 while r.status_code == 200:
     r_json=r.json()
     for entry in r_json["entries"]:
-        row = list(entry_dict[entry["id"]])
-        entry_dict[entry["id"]] = row.insert
-#        print r_json["id"]
-#        for each in r.json()["entries"]:
-#            print each["id"]
+        id = entry["id"]
+        entry_dict[id] = []
+        entry_dict[id].append(id)
+        entry_dict[id].append(entry.get("url"))
+        entry_dict[id].append(entry.get("at"))
+        try:
+            entry_dict[id].append(entry["workout"].get("title"))
+        except:
+            entry_dict[id].append("")
+            logging.warning("Problem in ID: " + str(id))
+        entry_dict[id].append(entry.get("message"))
+        entry_dict[id].append(entry["workout"].get("activity_type"))
+        entry_dict[id].append(entry["workout"].get("felt"))
+        entry_dict[id].append(entry["workout"].get("duration"))
+        # hope and pray that every workout has a distance field
+        entry_dict[id].append(entry["workout"]["distance"].get("value"))
+        entry_dict[id].append(entry["workout"]["distance"].get("units"))
+
     page+=1
-    if page > 1:    # stop after 5 pages for testing purposes
+    if page > 25:    # stop after 5 pages for testing purposes
         break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
     time.sleep(0.25)
     logging.info("Fetching: " + api_url_entries)
+    r = s.get(api_url_entries)
     if r.status_code == 503:
         # probably hit the API requests per hour cap
         logging.error("Received HTTP 503. Please retry in: ____ seconds")
@@ -154,4 +186,5 @@ while r.status_code == 200:
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
 
-print entry_dict
+for id in entry_dict:   
+    print entry_dict[id][0]
