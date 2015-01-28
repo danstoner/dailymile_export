@@ -9,8 +9,6 @@ import cStringIO
 import traceback
 import sys
 
-
-
 # CONFIGURABLES
 
 #TODO convert these to runtime parameters
@@ -173,49 +171,62 @@ s = requests.Session()
 # https://api.dailymile.com/people/danstoner/entries.json?page=1
 #api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
 
-# to debug enoding bug
+# to debug encoding issue on RIGHT SINGLE QUOTATION MARK
 api_url_entries="http://api.dailymile.com/people/danstoner/entries.json?since=1284922400&until=1284999400"
-
 
 logging.info("First API Request: " + api_url_entries)
 
 r = s.get(api_url_entries)
 
-#raise SystemExit
-
 while r.status_code == 200:
     r_json=r.json()
     for entry in r_json["entries"]:
-        print unicode(entry["message"])
         # Every JSON record seems to include "id", "url", and "at"
         id = entry["id"]
-        # assuming that paging through the API will not fetch a duplicate ID
+        # Assuming that paging through the API will not fetch a duplicate ID but
+        # checking anyway because I seem to be able to pull an infinite number of pages,
+        # far more than should exist in my entries.
         if id in entry_dict:
             logging.error("**ERROR** Duplicate ID: " + str(id))
             break
         entry_dict[id] = []
-        entry_dict[id].append(id)
-        entry_dict[id].append(entry.get("url"))
-        entry_dict[id].append(entry.get("at"))
+        entry_dict[id].append(str(id))
+        entry_dict[id].append(str(entry.get("url")))
+        entry_dict[id].append(str(entry.get("at")))
         # The JSON record does not always include every field
-        try: entry_dict[id].append(entry["workout"].get("title"))
+        try: entry_dict[id].append(str(entry["workout"].get("title")))
         except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry["workout"]["activity_type"])
+        try: entry_dict[id].append(str(entry["workout"]["activity_type"]))
         except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry["workout"]["felt"])
+        try: entry_dict[id].append(str(entry["workout"]["felt"]))
         except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry["workout"]["duration"])
-        except: entry_dict[id].append(None)
-        try: entry_dict[id].append(entry["workout"]["distance"]["value"])
-        except: entry_dict[id].append(None)
-        try: entry_dict[id].append(entry["workout"]["distance"]["units"])
+        try: entry_dict[id].append(str(entry["workout"]["duration"]))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(str(entry["workout"]["distance"]["value"]))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(unicode(entry["workout"]["distance"]["units"]))
         except: entry_dict[id].append("")
         try: entry_dict[id].append(unicode(entry["message"]))
         except Exception, err:
             logging.error("encode exception: " + traceback.format_exc())
             entry_dict[id].append("")
-
-
+        # The JSON record does not always include every field
+        # try: entry_dict[id].append(entry["workout"].get("title"))
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(entry["workout"]["activity_type"])
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(entry["workout"]["felt"])
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(entry["workout"]["duration"])
+        # except: entry_dict[id].append(None)
+        # try: entry_dict[id].append(entry["workout"]["distance"]["value"])
+        # except: entry_dict[id].append(None)
+        # try: entry_dict[id].append(entry["workout"]["distance"]["units"])
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(unicode(entry["message"]))
+        # except Exception, err:
+        #     logging.error("encode exception: " + traceback.format_exc())
+        #     entry_dict[id].append("")
     page+=1
     if page > 1:
         break
@@ -233,10 +244,7 @@ while r.status_code == 200:
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
 
-#for id in entry_dict:   
-#    print entry_dict[id][0]
-
-# append dict data to CSV                                                                                                            
+# write the data to csv     
 with open(outputfile,"a") as f:
     writer = UnicodeWriter(f)
     for key in entry_dict:
@@ -244,6 +252,7 @@ with open(outputfile,"a") as f:
         except Exception, err: 
             logging.error("Could not write: " + str(entry_dict[key]) + "," + traceback.format_exc())
 
+print entry_dict
 
 ### Current ERROR.  Probably copy and pasted this quote into dm. Tempted to edit the entry and fix it in the source data.
 
@@ -252,3 +261,6 @@ with open(outputfile,"a") as f:
 #   File "dailymile_dump_json.py", line 210, in <module>
 #     writer.writerow(entry_dict[key])
 # UnicodeEncodeError: 'ascii' codec can't encode character u'\u2019' in position 369: ordinal not in range(128)
+#
+# API:
+# http://api.dailymile.com/people/danstoner/entries.json?since=1284922400&until=1284999400

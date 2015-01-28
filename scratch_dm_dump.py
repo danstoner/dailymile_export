@@ -8,7 +8,6 @@ import codecs
 import cStringIO
 import traceback
 import sys
-import unicodedata
 
 # CONFIGURABLES
 
@@ -150,9 +149,9 @@ class UnicodeWriter:
 # if we cannot open the output file might as well stop work here.
 header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
 outputfile = dm_user+"_dailymile_export."+str(time.time())+".csv"
-# with open(outputfile,"w") as f:
-#     writer = csv.writer(f)
-#     writer.writerow(header)
+with open(outputfile,"w") as f:
+    writer = csv.writer(f)
+    writer.writerow(header)
 
 
 
@@ -172,49 +171,79 @@ s = requests.Session()
 # https://api.dailymile.com/people/danstoner/entries.json?page=1
 #api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
 
+# to debug encoding issue on RIGHT SINGLE QUOTATION MARK
 api_url_entries="http://api.dailymile.com/people/danstoner/entries.json?since=1284922400&until=1284999400"
-
-
-#r = requests.get(api_url_entries)
 
 logging.info("First API Request: " + api_url_entries)
 
 r = s.get(api_url_entries)
 
-r_json = r.json()    # need later version of requests lib than I have on my laptop
-
-for entry in r_json["entries"]:
-    # Every JSON record seems to include "id", "url", and "at"
-    id = entry["id"]
-    # Assuming that paging through the API will not fetch a duplicate ID but
-    # checking anyway because I seem to be able to pull an infinite number of pages,
-    # far more than should exist in my entries.
-    if id in entry_dict:
-        logging.error("**ERROR** Duplicate ID: " + str(id))
+while r.status_code == 200:
+    r_json=r.json()
+    for entry in r_json["entries"]:
+        # Every JSON record seems to include "id", "url", and "at"
+        id = entry["id"]
+        # Assuming that paging through the API will not fetch a duplicate ID but
+        # checking anyway because I seem to be able to pull an infinite number of pages,
+        # far more than should exist in my entries.
+        if id in entry_dict:
+            logging.error("**ERROR** Duplicate ID: " + str(id))
+            break
+        entry_dict[id] = []
+        entry_dict[id].append(str(id))
+        entry_dict[id].append(str(entry.get("url")))
+        entry_dict[id].append(str(entry.get("at")))
+        # The JSON record does not always include every field
+        try: entry_dict[id].append(str(entry["workout"].get("title")))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(str(entry["workout"]["activity_type"]))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(str(entry["workout"]["felt"]))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(str(entry["workout"]["duration"]))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(str(entry["workout"]["distance"]["value"]))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(unicode(entry["workout"]["distance"]["units"]))
+        except: entry_dict[id].append("")
+        try: entry_dict[id].append(unicode(entry["message"]))
+        except Exception, err:
+            logging.error("encode exception: " + traceback.format_exc())
+            entry_dict[id].append("")
+        # The JSON record does not always include every field
+        # try: entry_dict[id].append(entry["workout"].get("title"))
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(entry["workout"]["activity_type"])
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(entry["workout"]["felt"])
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(entry["workout"]["duration"])
+        # except: entry_dict[id].append(None)
+        # try: entry_dict[id].append(entry["workout"]["distance"]["value"])
+        # except: entry_dict[id].append(None)
+        # try: entry_dict[id].append(entry["workout"]["distance"]["units"])
+        # except: entry_dict[id].append("")
+        # try: entry_dict[id].append(unicode(entry["message"]))
+        # except Exception, err:
+        #     logging.error("encode exception: " + traceback.format_exc())
+        #     entry_dict[id].append("")
+    page+=1
+    if page > 1:
         break
-    entry_dict[id] = []
-    entry_dict[id].append(str(id))
-    entry_dict[id].append(str(entry.get("url")))
-    entry_dict[id].append(str(entry.get("at")))
-    # The JSON record does not always include every field
-    try: entry_dict[id].append(str(entry["workout"].get("title")))
-    except: entry_dict[id].append("")
-    try: entry_dict[id].append(str(entry["workout"]["activity_type"]))
-    except: entry_dict[id].append("")
-    try: entry_dict[id].append(str(entry["workout"]["felt"]))
-    except: entry_dict[id].append("")
-    try: entry_dict[id].append(str(entry["workout"]["duration"]))
-    except: entry_dict[id].append("")
-    try: entry_dict[id].append(str(entry["workout"]["distance"]["value"]))
-    except: entry_dict[id].append("")
-    try: entry_dict[id].append(unicode(entry["workout"]["distance"]["units"]))
-    except: entry_dict[id].append("")
-    try: entry_dict[id].append(unicode(entry["message"]))
-    except Exception, err:
-        logging.error("encode exception: " + traceback.format_exc())
-        entry_dict[id].append("")
-#    entry_dict[id].append("you\u2019d have the perfect running shoe.".decode('utf-8'))
-
+    api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
+    # give the API a break
+    time.sleep(0.25)
+    logging.info("Fetching: " + api_url_entries)
+    r = s.get(api_url_entries)
+    if r.status_code == 503:
+        # probably hit the API requests per hour cap
+        logging.error("Received HTTP 503. Please retry in: ____ seconds")
+    if r.status_code == 404:
+        # probably at the last page
+        logging.error("Received HTTP 404 on " + api_url_entries)
+    if r.status_code != 200:
+        logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
+        
 
 with open(outputfile,"a") as f:
     writer = UnicodeWriter(f)
@@ -232,71 +261,6 @@ with open(outputfile,"a") as f:
 #        writer.writerow(entry_dict[key])
 
 print entry_dict
-
-
-
-raise SystemExit
-
-while r.status_code == 200:
-    r_json=r.json()
-    for entry in r_json["entries"]:
-        # Every JSON record seems to include "id", "url", and "at"
-        id = entry["id"]
-        # assuming that paging through the API will not fetch a duplicate ID
-        if id in entry_dict:
-            logging.error("**ERROR** Duplicate ID: " + str(id))
-            break
-        entry_dict[id] = []
-        entry_dict[id].append(id)
-        entry_dict[id].append(entry.get("url"))
-        entry_dict[id].append(entry.get("at"))
-        # The JSON record does not always include every field
-        try: entry_dict[id].append(entry["workout"].get("title"))
-        except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry["workout"]["activity_type"])
-        except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry["workout"]["felt"])
-        except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry["workout"]["duration"])
-        except: entry_dict[id].append(None)
-        try: entry_dict[id].append(entry["workout"]["distance"]["value"])
-        except: entry_dict[id].append(None)
-        try: entry_dict[id].append(entry["workout"]["distance"]["units"])
-        except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry.get("message"))
-        except: entry_dict[id].append("")
-
-
-    page+=1
-    if page > 100:
-        break
-    api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
-    # give the API a break
-    time.sleep(0.25)
-    logging.info("Fetching: " + api_url_entries)
-    r = s.get(api_url_entries)
-    if r.status_code == 503:
-        # probably hit the API requests per hour cap
-        logging.error("Received HTTP 503. Please retry in: ____ seconds")
-    if r.status_code == 404:
-        # probably at the last page
-        logging.error("Received HTTP 404 on " + api_url_entries)
-    if r.status_code != 200:
-        logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
-
-#for id in entry_dict:   
-#    print entry_dict[id][0]
-
-# append dict data to CSV                                                                                                            
-with open(outputfile,"a") as f:
-    writer = csv.writer(f)
-    # for key in entry_dict:
-    for key in entry_dict:
-        for column in entry_dict[key]:
-            try: column = str(column).encode('utf-8')
-            except: logging.error("Could not write: " + str(entry_dict[key]))
-            print column
-#        writer.writerow(entry_dict[key])
 
 
 ### Current ERROR.  Probably copy and pasted this quote into dm. Tempted to edit the entry and fix it in the source data.
