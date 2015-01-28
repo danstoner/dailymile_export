@@ -4,6 +4,11 @@ import time
 import calendar
 import logging
 import csv
+import codecs
+import cStringIO
+import traceback
+import sys
+
 
 
 # CONFIGURABLES
@@ -112,7 +117,34 @@ page = 1
 # }
 
 
+class UnicodeWriter:
+    """
+    A CSV writer which will write rows to CSV file "f",
+    which is encoded in the given encoding.
+    """
 
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") for s in row])
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
 
 # BEGIN
 
@@ -139,9 +171,11 @@ s = requests.Session()
 
 # sample url for page 1 would be:
 # https://api.dailymile.com/people/danstoner/entries.json?page=1
-api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
+#api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
 
-#r = requests.get(api_url_entries)
+# to debug enoding bug
+api_url_entries="http://api.dailymile.com/people/danstoner/entries.json?since=1284922400&until=1284999400"
+
 
 logging.info("First API Request: " + api_url_entries)
 
@@ -152,6 +186,7 @@ r = s.get(api_url_entries)
 while r.status_code == 200:
     r_json=r.json()
     for entry in r_json["entries"]:
+        print unicode(entry["message"])
         # Every JSON record seems to include "id", "url", and "at"
         id = entry["id"]
         # assuming that paging through the API will not fetch a duplicate ID
@@ -175,12 +210,14 @@ while r.status_code == 200:
         except: entry_dict[id].append(None)
         try: entry_dict[id].append(entry["workout"]["distance"]["units"])
         except: entry_dict[id].append("")
-        try: entry_dict[id].append(entry.get("message"))
-        except: entry_dict[id].append("")
+        try: entry_dict[id].append(unicode(entry["message"]))
+        except Exception, err:
+            logging.error("encode exception: " + traceback.format_exc())
+            entry_dict[id].append("")
 
 
     page+=1
-    if page > 100:
+    if page > 1:
         break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
@@ -201,14 +238,11 @@ while r.status_code == 200:
 
 # append dict data to CSV                                                                                                            
 with open(outputfile,"a") as f:
-    writer = csv.writer(f)
-    # for key in entry_dict:
+    writer = UnicodeWriter(f)
     for key in entry_dict:
-        for column in entry_dict[key]:
-            try: column = str(column).encode('utf-8')
-            except: logging.error("Could not write: " + str(entry_dict[key]))
-            print column
-#        writer.writerow(entry_dict[key])
+        try: writer.writerow(entry_dict[key])
+        except Exception, err: 
+            logging.error("Could not write: " + str(entry_dict[key]) + "," + traceback.format_exc())
 
 
 ### Current ERROR.  Probably copy and pasted this quote into dm. Tempted to edit the entry and fix it in the source data.

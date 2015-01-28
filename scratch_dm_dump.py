@@ -4,7 +4,11 @@ import time
 import calendar
 import logging
 import csv
-
+import codecs
+import cStringIO
+import traceback
+import sys
+import unicodedata
 
 # CONFIGURABLES
 
@@ -112,16 +116,43 @@ page = 1
 # }
 
 
+class UnicodeWriter:
+    """
+    A CSV writer which will write rows to CSV file "f",
+    which is encoded in the given encoding.
+    """
 
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") for s in row])
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
 
 # BEGIN
 
 # if we cannot open the output file might as well stop work here.
 header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
 outputfile = dm_user+"_dailymile_export."+str(time.time())+".csv"
-with open(outputfile,"w") as f:
-    writer = csv.writer(f)
-    writer.writerow(header)
+# with open(outputfile,"w") as f:
+#     writer = csv.writer(f)
+#     writer.writerow(header)
 
 
 
@@ -149,41 +180,56 @@ api_url_entries="http://api.dailymile.com/people/danstoner/entries.json?since=12
 logging.info("First API Request: " + api_url_entries)
 
 r = s.get(api_url_entries)
-#print r.headers
-#print r.status
-#print r.content
-
-#print r.text
 
 r_json = r.json()    # need later version of requests lib than I have on my laptop
 
 for entry in r_json["entries"]:
     # Every JSON record seems to include "id", "url", and "at"
     id = entry["id"]
-    # assuming that paging through the API will not fetch a duplicate ID
+    # Assuming that paging through the API will not fetch a duplicate ID but
+    # checking anyway because I seem to be able to pull an infinite number of pages,
+    # far more than should exist in my entries.
     if id in entry_dict:
         logging.error("**ERROR** Duplicate ID: " + str(id))
         break
     entry_dict[id] = []
-    entry_dict[id].append(id)
-    entry_dict[id].append(entry.get("url"))
-    entry_dict[id].append(entry.get("at"))
+    entry_dict[id].append(str(id))
+    entry_dict[id].append(str(entry.get("url")))
+    entry_dict[id].append(str(entry.get("at")))
     # The JSON record does not always include every field
-    try: entry_dict[id].append(entry["workout"].get("title"))
+    try: entry_dict[id].append(str(entry["workout"].get("title")))
     except: entry_dict[id].append("")
-    try: entry_dict[id].append(entry["workout"]["activity_type"])
+    try: entry_dict[id].append(str(entry["workout"]["activity_type"]))
     except: entry_dict[id].append("")
-    try: entry_dict[id].append(entry["workout"]["felt"])
+    try: entry_dict[id].append(str(entry["workout"]["felt"]))
     except: entry_dict[id].append("")
-    try: entry_dict[id].append(entry["workout"]["duration"])
-    except: entry_dict[id].append(None)
-    try: entry_dict[id].append(entry["workout"]["distance"]["value"])
-    except: entry_dict[id].append(None)
-    try: entry_dict[id].append(entry["workout"]["distance"]["units"])
+    try: entry_dict[id].append(str(entry["workout"]["duration"]))
     except: entry_dict[id].append("")
-    try: entry_dict[id].append(entry.get("message"))
+    try: entry_dict[id].append(str(entry["workout"]["distance"]["value"]))
     except: entry_dict[id].append("")
+    try: entry_dict[id].append(unicode(entry["workout"]["distance"]["units"]))
+    except: entry_dict[id].append("")
+    try: entry_dict[id].append(unicode(entry["message"]))
+    except Exception, err:
+        logging.error("encode exception: " + traceback.format_exc())
+        entry_dict[id].append("")
+#    entry_dict[id].append("you\u2019d have the perfect running shoe.".decode('utf-8'))
 
+
+with open(outputfile,"a") as f:
+    writer = UnicodeWriter(f)
+    for key in entry_dict:
+        print entry_dict[key]
+        try: writer.writerow(entry_dict[key])
+        except Exception, err: 
+            logging.error("Could not write: " + str(entry_dict[key]) + "," + traceback.format_exc())
+
+#        for column in entry_dict[key]:
+#            try: column = str(column).encode('utf-8')
+#            except Exception, err: 
+#                logging.error("Could not write: " + str(entry_dict[key]) + "," + traceback.format_exc())
+#            print column
+#        writer.writerow(entry_dict[key])
 
 print entry_dict
 
