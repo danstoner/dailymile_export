@@ -1,8 +1,89 @@
+
+See http://www.dailymile.com/api/documentation
+
+# dailymile says that they currently cap connections at 1500 requests per hour
+
+# Should not have to make posts public since the dailymile API appears to ignore privacy settings!
+
+# Not interested in exporting comments.
+# These are the fields that I want out of the API:
+#
+# id
+# url
+# at
+# message
+# workout
+#   activity_type
+#   distance
+#     value
+#     units
+#   felt
+#   duration
+#   title
+# media
+#   content
+#     url
+#     type
+
+
+
+
+
+# API needs unix time aka ticks since the epoch
+# See:
+#  http://www.unixtimestamp.com/
+# Example: January 1, 2010 or 2010-01-01 would become "1262304000"
+# 1262304000 01/01/2010 @ 12:00am (UTC)
+# 1293840000 01/01/2011 @ 12:00am (UTC)
+# 1325376000 01/01/2012 @ 12:00am (UTC)
+# 1356998400 01/01/2013 @ 12:00am (UTC)
+# 1388534400 01/01/2014 @ 12:00am (UTC)
+# 1420070400 01/01/2015 @ 12:00am (UTC)
+
+
+# Sample API request and response
+
+# $ curl -s  "https://api.dailymile.com/people/danstoner/entries.json?since=1420934400&until=1421020800" | json_pp
+# {
+#    "entries" : [
+#       {
+#          "url" : "http://www.dailymile.com/entries/31577777",
+#          "at" : "2015-01-11T17:56:10Z",
+#          "location" : {
+#             "name" : "Gainesville, FL"
+#          },
+#          "comments" : [],
+#          "message" : "First run in Inov-8 TrailRoc 235. Great shoes! Good protection, no cushion. Upper is snug to the foot without being tight. No blisters or rubbing. Ran parking lot to parking lot with 2 x Conquistador in the middle. Nice cool day. Trails were in good shape day after Tour de Felasco MTB and I mostly had them to myself. Forgot to charge my phone last night so I'm guessing at pace/distance. Meant to eat something mid-run but I forgot that, too. This caps off a 60 mile week.",
+#          "workout" : {
+#             "title" : "Hilly San Felasco Trails",
+#             "activity_type" : "Running",
+#             "distance" : {
+#                "units" : "miles",
+#                "value" : 24
+#             },
+#             "duration" : 14400,
+#             "felt" : "good"
+#          },
+#          "user" : {
+#             "username" : "danstoner",
+#             "photo_url" : "https://dnetd3r67cewl.cloudfront.net/unsafe/48x48/https://d2d6zexjsynj7u.cloudfront.net/pictures/users/93956/1418935415.jpg",
+#             "url" : "http://www.dailymile.com/people/danstoner",
+#             "display_name" : "Dan S."
+#          },
+#          "id" : 31577777,
+#          "likes" : []
+#       }
+#    ]
+# }
+
+
+# sample url for page 2 would be:
+# https://api.dailymile.com/people/danstoner/entries.json?page=2
+
+
 Some examples and poking at the API...
 
-
 # api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?since=" + date_since
-
 
 dstoner@dstoner-ultra:~/git/dailymile_export$ python dailymile_dump_json.py  | json_pp | grep entries
    "entries" : [
@@ -28,8 +109,6 @@ dstoner@dstoner-ultra:~/git/dailymile_export$ python dailymile_dump_json.py  | j
          "url" : "http://www.dailymile.com/entries/29734621",
 
 
-
-
 Calls to a URL via curl seem to return json rather than an html page.
 
 $ curl -s  http://www.dailymile.com/entries/29992867/
@@ -47,7 +126,118 @@ $ curl -s https://api.dailymile.com/entries/29992867.json
 
 
 
+Posts or other non-activity entries will not have a "workout" field in the JSON.
+
+Videos and photos will have other data:
+
+$ curl -s http://www.dailymile.com/entries/30583786 | json_pp
+{
+   "id" : 30583786,
+   "url" : "http://www.dailymile.com/entries/30583786",
+   "comments" : [
+      {
+         "created_at" : "2014-09-28T16:17:33Z",
+         "body" : "congrats!\n",
+         "user" : {
+            "username" : "cbester",
+            "url" : "http://www.dailymile.com/people/cbester",
+            "photo_url" : "https://dnetd3r67cewl.cloudfront.net/unsafe/48x48/https://d2d6zexjsynj7u.cloudfront.net/pictures/users/66272/1421529640.jpg",
+            "display_name" : "Cathy B."
+         }
+      },
+      {
+         "user" : {
+            "display_name" : "Luc F.",
+            "photo_url" : "https://dnetd3r67cewl.cloudfront.net/unsafe/48x48/https://d2d6zexjsynj7u.cloudfront.net/pictures/users/101555/1409114353.jpg",
+            "url" : "http://www.dailymile.com/people/bfluc",
+            "username" : "bfluc"
+         },
+         "created_at" : "2014-09-28T19:02:34Z",
+         "body" : "I dont care 'cause you have the better running form! I must add the guy have an awsome racing outfit! I'll drink a Hopfenweisse to celebrate your great performance. 8;-)"
+      }
+   ],
+   "location" : {
+      "name" : "Gainesville, FL"
+   },
+   "media" : [
+      {
+         "content" : {
+            "type" : "video",
+            "url" : "http://www.youtube.com/v/qQiGApxnDPQ"
+         },
+         "preview" : {
+            "width" : 120,
+            "type" : "image",
+            "url" : "http://i.ytimg.com/vi/qQiGApxnDPQ/1.jpg",
+            "height" : 90
+         }
+      }
+   ],
+   "at" : "2014-09-28T15:37:14Z",
+   "likes" : [
+      {
+         "created_at" : "2014-09-28T16:17:23Z",
+         "user" : {
+            "username" : "cbester",
+            "url" : "http://www.dailymile.com/people/cbester",
+            "photo_url" : "https://dnetd3r67cewl.cloudfront.net/unsafe/48x48/https://d2d6zexjsynj7u.cloudfront.net/pictures/users/66272/1421529640.jpg",
+            "display_name" : "Cathy B."
+         }
+      },
+      {
+         "created_at" : "2014-09-28T19:00:26Z",
+         "user" : {
+            "display_name" : "Luc F.",
+            "photo_url" : "https://dnetd3r67cewl.cloudfront.net/unsafe/48x48/https://d2d6zexjsynj7u.cloudfront.net/pictures/users/101555/1409114353.jpg",
+            "url" : "http://www.dailymile.com/people/bfluc",
+            "username" : "bfluc"
+         }
+      }
+   ],
+   "message" : "Video of my 2nd place finish at WoBtoberfest 5k. I couldn't catch the Lederhosen Man!\r\n\r\n(Link should take you to 5min 35s in for the finishers)\r\nhttps://www.youtube.com/watch?v=qQiGApxnDPQ&t=5m35s",
+   "user" : {
+      "display_name" : "Dan S.",
+      "photo_url" : "https://dnetd3r67cewl.cloudfront.net/unsafe/48x48/https://d2d6zexjsynj7u.cloudfront.net/pictures/users/93956/1418935415.jpg",
+      "url" : "http://www.dailymile.com/people/danstoner",
+      "username" : "danstoner"
+   }
+}
+
+
+# to debug encoding issue on RIGHT SINGLE QUOTATION MARK aka Unicode character 2019
+http://api.dailymile.com/people/danstoner/entries.json?since=1284922400&until=1284999400
+
+
+# debug line endings embedded in fields. Looks like \n newline characters.
+
+dstoner@dstoner-thinkster:~/git/dailymile_export$ cat -A danstoner_dailymile_export.1422546479.15.csv | grep --after-context=20 3310178
+3310178,http://www.dailymile.com/entries/3310178,2010-09-15T12:29:46Z,,,,,,,"Saw some info apparently from Arthur Lydiard's book... get your REST people!$
+""We do know a bit more about the appropriate length of the recovery $
+period, thanks to research carried out with marathon runners. A study $
+carried out by Michael Warhol and his colleagues at Harvard Medical $
+School and Tufts University uncovered extensive damage in marathoners' $
+leg muscles immediately after the 26.2-mile race (broken cell fibres, $
+swollen cells, mangled membranes, degenerated mitochondria, and $
+damaged blood vessels were present). Repair of this sorry state of $
+affairs took about four weeks, and in some runners it took even longer $
+('Skeletal Muscle Injury and Repair in Marathon Runners after $
+Competition,' American Journal of Pathology, vol. 118, pp. 331-339, $
+1985).  True, not all endurance athletes are marathon runners, but $
+subsequent research showed that moderate endurance training (about 31 $
+miles of running per week - with no marathon running) can produce $
+similar damage in 33 per cent of runners and slightly heavier training $
+(48 miles per week with no marathoning) can induce comparable damage $
+in the majority of runners ('Structural and Ultrastructural Changes in $
+Skeletal Muscle Associated with Long-Distance Training and Running,' $
+International Journal of Sports Medicine, vol. 10, pp. S156-159, $
+1989). Thus, we can conclude that almost all serious runners need a $
+recovery period . . . """^M$
+
+
+
 The API does not provide gear for each run but it is available with parsing difficulty from each "entry" and the workout_data endpoint.
+Gear/shoe is between:  <span> </span>
+Effort is in effort-rating class.
 
 $ curl -s https://www.dailymile.com/people/danstoner/entries/28601037/workout_data
 <dl id="workout_details" class="details left">
