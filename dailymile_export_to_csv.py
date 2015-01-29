@@ -70,10 +70,11 @@ class UnicodeWriter:
 # BEGIN
 
 # if we cannot open the output file might as well stop work here.
+# Using excel-tab as the output format (tab-delimited)
 header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
-outputfile = dm_user+"_dailymile_export."+str(time.time())+".csv"
+outputfile = dm_user+"_dailymile_export."+str(time.time())+".tsv"
 with open(outputfile,"w") as f:
-    writer = UnicodeWriter(f)
+    writer = UnicodeWriter(f,dialect='excel-tab')
     writer.writerow(header)
 
 entry_dict = dict()
@@ -121,7 +122,7 @@ while r.status_code == 200:
             entry_dict[id].append("")
         except: entry_dict[id].append("")
     page+=1
-    if page > 10:
+    if page > 200:
         break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
@@ -139,7 +140,7 @@ while r.status_code == 200:
 
 # write the data to csv     
 with open(outputfile,"a") as f:
-    writer = UnicodeWriter(f)
+    writer = UnicodeWriter(f,dialect='excel-tab')
     for key in entry_dict:
         try: writer.writerow(entry_dict[key])
         except Exception, err: 
