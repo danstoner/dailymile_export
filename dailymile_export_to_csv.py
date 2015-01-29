@@ -122,11 +122,11 @@ while r.status_code == 200:
             entry_dict[id].append("")
         except: entry_dict[id].append("")
     page+=1
-    if page > 200:
-        break
+    # if page > 2: # cut down number of page requests for testing
+    #     break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
-    time.sleep(0.25)
+    time.sleep(0.1)
     logging.info("Fetching: " + api_url_entries)
     r = s.get(api_url_entries)
     if r.status_code == 503:

@@ -1,7 +1,5 @@
-dailymile_export
+= dailymile_export
 ================
-
-*** THE CODE DOES NOT WORK YET!!! ***
 
 Export entries from dailymile using the API.
 
@@ -10,5 +8,13 @@ http://www.dailymile.com/api/documentation
 
 Why write my own exporter?  The built-in export feature of dailymile is abysmal.
 
-I also want to be able to extract the gear info which isn't even avaialable in the API.
+The dailymile website export only includes a small number of the available data fields 
+(date,activity_type,distance,time,felt,elevation_gain). I have spent a lot of time over
+the years using dailymile as my serious runner training log. I want to be able to get
+my data out (and be able to analyze it with my own tools, etc.).
+
+
+I hope to export the gear information (so I can track shoe mileage) which isn't even avaialable in the API.
+
+Maybe eventually I will include additional fields such as tags and weather.
 
