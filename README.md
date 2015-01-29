@@ -1,4 +1,4 @@
-= dailymile_export
+dailymile_export
 ================
 
 Export entries from dailymile using the API.
