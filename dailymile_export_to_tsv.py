@@ -13,11 +13,12 @@ import sys
 
 #TODO convert these to runtime parameters
 
-# dailymile user name
+# Change from "INFO" to "DEBUG" to log everything
+logging.basicConfig(level=logging.INFO)
+
+# change this to your dailymile user name
 dm_user="danstoner"
 
-# log everything for now
-logging.basicConfig(level=logging.DEBUG)
 
 
 # Earliest date entry to fetch in format YYYY-MM-DD
@@ -148,6 +149,9 @@ while (r.status_code == 200) and (r_json["entries"]):
 
 # The ids look like sequential numbers, sorting by id may go a long way towards getting the entries in chronological order
 sorted_keys = sorted(entry_dict.keys())
+
+logging.info("Total number of entries: "+str(len(sorted_keys)))
+logging.info("Writing to output file: " + outputfile)
 
 # write the data to csv     
 with open(outputfile,"a") as f:
