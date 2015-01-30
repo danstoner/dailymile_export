@@ -122,8 +122,8 @@ while r.status_code == 200:
             entry_dict[id].append("")
         except: entry_dict[id].append("")
     page+=1
-    # if page > 2: # cut down number of page requests for testing
-    #     break
+    if page > 20: # cut down number of page requests for testing
+        break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
     time.sleep(0.1)
@@ -138,10 +138,13 @@ while r.status_code == 200:
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
 
+# The ids look like sequential numbers, sorting by id may go a long way towards getting the entries in chronological order
+sorted_keys = sorted(entry_dict.keys())
+
 # write the data to csv     
 with open(outputfile,"a") as f:
     writer = UnicodeWriter(f,dialect='excel-tab')
-    for key in entry_dict:
+    for key in sorted_keys:
         try: writer.writerow(entry_dict[key])
         except Exception, err: 
             logging.error("Could not write: " + str(entry_dict[key]) + "," + traceback.format_exc())
