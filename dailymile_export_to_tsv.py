@@ -86,9 +86,9 @@ api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?p
 logging.info("First API Request: " + api_url_entries)
 
 r = s.get(api_url_entries)
+r_json=r.json()
 
-while r.status_code == 200:
-    r_json=r.json()
+while (r.status_code == 200) and (r_json["entries"]):
     for entry in r_json["entries"]:
         # Every JSON record seems to include "id", "url", and "at"
         id = entry["id"]
@@ -122,13 +122,15 @@ while r.status_code == 200:
             entry_dict[id].append("")
         except: entry_dict[id].append("")
     page+=1
-    if page > 20: # cut down number of page requests for testing
-        break
+#    if page > 2: # cut down number of page requests for testing
+#        break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
     time.sleep(0.1)
     logging.info("Fetching: " + api_url_entries)
-    try: r = s.get(api_url_entries)
+    try:
+        r = s.get(api_url_entries)
+        r_json=r.json()
     except:
         if r.status_code == 503:
             # probably hit the API requests per hour cap, check Retry-After header (future work)
@@ -142,6 +144,7 @@ while r.status_code == 200:
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
         break
+
 
 # The ids look like sequential numbers, sorting by id may go a long way towards getting the entries in chronological order
 sorted_keys = sorted(entry_dict.keys())
