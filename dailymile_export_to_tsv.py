@@ -128,15 +128,20 @@ while r.status_code == 200:
     # give the API a break
     time.sleep(0.1)
     logging.info("Fetching: " + api_url_entries)
-    r = s.get(api_url_entries)
-    if r.status_code == 503:
-        # probably hit the API requests per hour cap, check Retry-After header (future work)
-        logging.error("Received HTTP 503. Please retry in: ____ seconds")
+    try: r = s.get(api_url_entries)
+    except:
+        if r.status_code == 503:
+            # probably hit the API requests per hour cap, check Retry-After header (future work)
+            logging.error("Received HTTP 503. Please retry later.")
+        else:
+            logging.error("Error on GET request.")
+            break
     if r.status_code == 404:
         # probably at the last page
         logging.error("Received HTTP 404 on " + api_url_entries)
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
+        break
 
 # write the data to csv     
 with open(outputfile,"a") as f:
