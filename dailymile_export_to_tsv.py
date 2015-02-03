@@ -13,11 +13,12 @@ import sys
 
 #TODO convert these to runtime parameters
 
-# dailymile user name
+# Change from "INFO" to "DEBUG" to log everything
+logging.basicConfig(level=logging.INFO)
+
+# change this to your dailymile user name
 dm_user="danstoner"
 
-# log everything for now
-logging.basicConfig(level=logging.DEBUG)
 
 
 # Earliest date entry to fetch in format YYYY-MM-DD
@@ -86,9 +87,9 @@ api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?p
 logging.info("First API Request: " + api_url_entries)
 
 r = s.get(api_url_entries)
+r_json=r.json()
 
-while r.status_code == 200:
-    r_json=r.json()
+while (r.status_code == 200) and (r_json["entries"]):
     for entry in r_json["entries"]:
         # Every JSON record seems to include "id", "url", and "at"
         id = entry["id"]
@@ -122,24 +123,35 @@ while r.status_code == 200:
             entry_dict[id].append("")
         except: entry_dict[id].append("")
     page+=1
-    if page > 20: # cut down number of page requests for testing
-        break
+#    if page > 2: # cut down number of page requests for testing
+#        break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
     time.sleep(0.1)
     logging.info("Fetching: " + api_url_entries)
-    r = s.get(api_url_entries)
-    if r.status_code == 503:
-        # probably hit the API requests per hour cap, check Retry-After header (future work)
-        logging.error("Received HTTP 503. Please retry in: ____ seconds")
+    try:
+        r = s.get(api_url_entries)
+        r_json=r.json()
+    except:
+        if r.status_code == 503:
+            # probably hit the API requests per hour cap, check Retry-After header (future work)
+            logging.error("Received HTTP 503. Please retry later.")
+        else:
+            logging.error("Error on GET request.")
+            break
     if r.status_code == 404:
         # probably at the last page
         logging.error("Received HTTP 404 on " + api_url_entries)
     if r.status_code != 200:
         logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
+        break
+
 
 # The ids look like sequential numbers, sorting by id may go a long way towards getting the entries in chronological order
 sorted_keys = sorted(entry_dict.keys())
+
+logging.info("Total number of entries: "+str(len(sorted_keys)))
+logging.info("Writing to output file: " + outputfile)
 
 # write the data to csv     
 with open(outputfile,"a") as f:
