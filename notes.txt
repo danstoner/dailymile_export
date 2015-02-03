@@ -29,7 +29,7 @@ See http://www.dailymile.com/api/documentation
 
 
 
-# API needs unix time aka ticks since the epoch
+# API needs to receive unix time aka ticks since the epoch in since and until parameters
 # See:
 #  http://www.unixtimestamp.com/
 # Example: January 1, 2010 or 2010-01-01 would become "1262304000"
@@ -40,6 +40,8 @@ See http://www.dailymile.com/api/documentation
 # 1388534400 01/01/2014 @ 12:00am (UTC)
 # 1420070400 01/01/2015 @ 12:00am (UTC)
 
+#However, in API JSON repsonse data, date and time are returned in ISO-8601 format.
+# e.g.  "2015-01-11T17:56:10Z"
 
 # Sample API request and response
 
