@@ -13,16 +13,15 @@ import sys
 
 #TODO convert these to runtime parameters
 
-# Change from "INFO" to "DEBUG" to log everything
-logging.basicConfig(level=logging.INFO)
-
 # change this to your dailymile user name
 dm_user="danstoner"
 
 
+# Change from "INFO" to "DEBUG" to log everything
+logging.basicConfig(level=logging.INFO)
 
-# Earliest date entry to fetch in format YYYY-MM-DD
 ## not yet using this...
+# Earliest date entry to fetch in format YYYY-MM-DD
 #### start_date = "2010-01-01"
 
 #### date_since = str(calendar.timegm(time.strptime(start_date,"%Y-%m-%d")))
@@ -31,7 +30,7 @@ dm_user="danstoner"
 # workouts / connections required to get all of the data.
 # Until then, we will just start at page 1 and keep paging until there
 # are no more pages. This is actually reasonable for a "full export" anyway.
-#
+
 
 # start at page 1 and go until we run out of data
 page = 1
