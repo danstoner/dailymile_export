@@ -88,7 +88,14 @@ api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?p
 
 logging.info("First API Request: " + api_url_entries)
 
-r = s.get(api_url_entries)
+try: 
+    r = s.get(api_url_entries)
+    r.raise_for_status()
+except requests.exceptions.HTTPError as e:
+    logging.error(e)
+    raise SystemExit
+
+#raise SystemExit
 r_json=r.json()
 
 while (r.status_code == 200) and (r_json["entries"]):
@@ -133,21 +140,16 @@ while (r.status_code == 200) and (r_json["entries"]):
     logging.info("Fetching: " + api_url_entries)
     try:
         r = s.get(api_url_entries)
-        r_json=r.json()
-    except:
+        r.raise_for_status()
+    except requests.exceptions.HTTPError as e:
         if r.status_code == 503:
             # probably hit the API requests per hour cap, check Retry-After header (future work)
-            logging.error("Received HTTP 503. Please retry later.")
-        else:
-            logging.error("Error on GET request.")
+            logging.error("May have hit Requests per hour limit. Please retry later. Received: " + str(e))
             break
-    if r.status_code == 404:
-        # probably at the last page
-        logging.error("Received HTTP 404 on " + api_url_entries)
-    if r.status_code != 200:
-        logging.error("Received unexpected HTTP status code " + r.status_code + " on " + api_url_entries)
-        break
-
+        else:
+            logging.error("Error on GET request. Received: " + str(e))
+            break
+    r_json=r.json()
 
 # The ids look like sequential numbers, sorting by id may go a long way towards getting the entries in chronological order
 sorted_keys = sorted(entry_dict.keys())
