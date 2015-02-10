@@ -8,31 +8,26 @@ try:
     import cStringIO
     import traceback
     import sys
+    import argparse
 except ImportError, e:
     print "IMPORT ERROR: %s" % e
     raise SystemExit
 
-# CONFIGURABLES
+argparser = argparse.ArgumentParser(description='Script to download entries from the dailymile API for a particular user into a tab-delimited file.')
+argparser.add_argument("username", help="The dailymile.com username of the account to export.")
+argparser.add_argument("-d", "--debug", action="store_true", help="Enable debug level logging.")
+argparser.add_argument("-g", "--gear", action="store_true", help="Retrieve gear data also.")
+args = argparser.parse_args()
 
-#TODO convert these to runtime parameters
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
-# change this to your dailymile user name
-dm_user="danstoner"
+dm_user = args.username
 
-
-# Change from "INFO" to "DEBUG" to log everything
-logging.basicConfig(level=logging.INFO)
-
-## not yet using this...
-# Earliest date entry to fetch in format YYYY-MM-DD
-#### start_date = "2010-01-01"
-
-#### date_since = str(calendar.timegm(time.strptime(start_date,"%Y-%m-%d")))
-
-# At some point will probably need to fetch by year due to the number of
-# workouts / connections required to get all of the data.
-# Until then, we will just start at page 1 and keep paging until there
-# are no more pages. This is actually reasonable for a "full export" anyway.
+if args.gear:
+    logging.info("*** Gear data downloads not yet enabled in this script. ***")
 
 
 # start at page 1 and go until we run out of data
