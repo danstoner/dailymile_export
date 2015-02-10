@@ -1,13 +1,16 @@
-import json
-import requests
-import time
-import calendar
-import logging
-import csv
-import codecs
-import cStringIO
-import traceback
-import sys
+try:
+    import json
+    import requests
+    import time
+    import logging
+    import csv
+    import codecs
+    import cStringIO
+    import traceback
+    import sys
+except ImportError, e:
+    print "IMPORT ERROR: %s" % e
+    raise SystemExit
 
 # CONFIGURABLES
 
