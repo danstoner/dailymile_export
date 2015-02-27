@@ -93,7 +93,6 @@ except requests.exceptions.HTTPError as e:
     logging.error(e)
     raise SystemExit
 
-#raise SystemExit
 r_json=r.json()
 
 while (r.status_code == 200) and (r_json["entries"]):
@@ -101,8 +100,7 @@ while (r.status_code == 200) and (r_json["entries"]):
         # Every JSON record seems to include "id", "url", and "at"
         id = entry["id"]
         # Assuming that paging through the API will not fetch a duplicate ID but
-        # checking anyway because I seem to be able to pull an infinite number of pages,
-        # far more than should exist in my entries.
+        # checking anyway.
         if id in entry_dict:
             logging.error("**ERROR** Duplicate ID: " + str(id))
             break
@@ -130,8 +128,6 @@ while (r.status_code == 200) and (r_json["entries"]):
             entry_dict[id].append("")
         except: entry_dict[id].append("")
     page+=1
-#    if page > 2: # cut down number of page requests for testing
-#        break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
     time.sleep(0.1)
@@ -141,7 +137,6 @@ while (r.status_code == 200) and (r_json["entries"]):
         r.raise_for_status()
     except requests.exceptions.HTTPError as e:
         if r.status_code == 503:
-            # probably hit the API requests per hour cap, check Retry-After header (future work)
             logging.error("May have hit Requests per hour limit. Please retry later. Received: " + str(e))
             break
         else:
