@@ -1,6 +1,6 @@
 use v6;
 use JSON::Tiny;
-use HTTP::UserAgent;
+use HTTP::UserAgent;   # may not support SSL yet
 use Text::CSV;
 
 # replace this with proper args parsing
@@ -34,24 +34,17 @@ say "First API Request: " ~ $api_url_entries;
 my $ua = HTTP::UserAgent.new;
 my $response = $ua.get($api_url_entries);
 
-if $response.is-success {
-  say $response.content;
-} else {
+if ! $response.is-success {
   die $response.status-line;
-}
+} else {
+  my %rjson = %(from-json($response.content));
 
+  say %rjson;
 
-#my %rjson = %(from-json($response.content));
-
-#  if ($response.success) {
-#     my %rjson = %(from-json($response.content));
+  my @entries = %(from-json($response.content)){'entries'};
+# need to access nested data elements
 #
-#     say (%rjson{'id'});
-#  }
-#  else {
-#    say "An error occured.";
-# }
-
+}
 
 
 say "**** Terminating on purpose.***";
