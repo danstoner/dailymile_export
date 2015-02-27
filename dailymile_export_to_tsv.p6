@@ -1,6 +1,6 @@
 use v6;
 use JSON::Tiny;
-use HTTP::Client;
+use HTTP::UserAgent;   # may not support SSL yet
 use Text::CSV;
 
 # replace this with proper args parsing
@@ -25,23 +25,26 @@ my $nowtimestring = $nowtime.year ~ $nowtime.month ~ $nowtime.day ~ $nowtime.hou
 ##
 ##
 
-my $api_url_entries = "https://api.dailymile.com/people/" ~ $dm_user ~ "/entries.json?page=" ~ $page;
+my $api_url_entries = "http://api.dailymile.com/people/" ~ $dm_user ~ "/entries.json?page=" ~ $page;
 
 say "First API Request: " ~ $api_url_entries;
 
 
 ## HTTP::Client does not support HTTPS. Will need to look at other libraries.
-my $client = HTTP::Client.new;
-  my $response = $client.get($api_url_entries);
-  if ($response.success) {
-     my %rjson = %(from-json($response.content));
+my $ua = HTTP::UserAgent.new;
+my $response = $ua.get($api_url_entries);
 
-     say (%rjson{'id'});
-  }
-  else {
-    say "An error occured.";
- }
+if ! $response.is-success {
+  die $response.status-line;
+} else {
+  my %rjson = %(from-json($response.content));
 
+  say %rjson;
+
+  my @entries = %(from-json($response.content)){'entries'};
+# need to access nested data elements
+#
+}
 
 
 say "**** Terminating on purpose.***";
