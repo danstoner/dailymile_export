@@ -1,7 +1,10 @@
 use v6;
 use JSON::Tiny;
-use HTTP::UserAgent;   # may not support SSL yet
 use Text::CSV;
+
+# use IO::Socket::SSL  # would not build properly but do not need SSL anyway.
+use HTTP::UserAgent;   # requires IO::Socket::SSL for SSL functionality
+
 
 # replace this with proper args parsing
 if ! @*ARGS[0] {
@@ -29,8 +32,6 @@ my $api_url_entries = "http://api.dailymile.com/people/" ~ $dm_user ~ "/entries.
 
 say "First API Request: " ~ $api_url_entries;
 
-
-## HTTP::Client does not support HTTPS. Will need to look at other libraries.
 my $ua = HTTP::UserAgent.new;
 my $response = $ua.get($api_url_entries);
 
