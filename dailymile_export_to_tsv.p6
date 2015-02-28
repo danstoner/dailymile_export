@@ -38,14 +38,37 @@ my $response = $ua.get($api_url_entries);
 if ! $response.is-success {
   die $response.status-line;
 } else {
-  my %rjson = %(from-json($response.content));
 
-  say %rjson;
+say from-json('{ "a": 42 }').perl;
+say to-json { a => [1, 2, 'b'] };
 
-  my @entries = %(from-json($response.content)){'entries'};
-# need to access nested data elements
-#
+# save this line for now
+my %rjson = %(from-json($response.content));
+
+
+#  my @rjson = %(from-json($response.content)){'entries'};
+
+### Whether I use an array or a hash, from-json seems to be stuffing everything
+### into a single element.
+#  say "................................................................";
+
+#   for %rjson{@x} {            
+#     $_.say;
+# }
+
+  
+
+#  my @entries = %(from-json($response.content)){'entries'}[0];
+#  my @entries = %(from-json($response.content)){'entries'}[1];
+ 
+#  for @entries {
+# #    say $_ => 'id';
+#     say $_{'id'};
+#     # say "..................";
+#     }
+
 }
+
 
 
 say "**** Terminating on purpose.***";
