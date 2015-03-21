@@ -40,7 +40,7 @@ GetOptions ("help" => \$help,
 or usage();
 
 if ($gear) {
-    print "\nGear option is not yet available.\n";
+    print "\nINFO: Gear option is not yet available.\n";
     usage();
 }
 
@@ -49,13 +49,13 @@ if ($usage|$help) {
 }
 
 if (!($dm_user)) {
-    print "\nDailymile username is required.\n";
+    print "\n** ERROR: Dailymile username is required. **\n";
     usage();
 }
 
 
 if ($debug) {
-    print "\nDEBUG enabled.\n";
+    print "\nINFO: DEBUG enabled.\n";
 }
 
 
