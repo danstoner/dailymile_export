@@ -3,15 +3,64 @@ use JSON::PP;
 use Text::CSV;
 use Getopt::Long;
 
-# use IO::Socket::SSL  # would not build properly but do not need SSL anyway.
-#use HTTP::UserAgent;   # requires IO::Socket::SSL for SSL functionality
+# command-line options
+my $dm_user;
+my $help;
+my $debug;
+my $gear;
+
+my $usage_text = <<END;
+
+Description:
+
+  Script to download entries from the dailymile API for a particular user into a CSV.
+
+Usage: dailymile_export_to_tsv.pl [OPTIONS] <PARAMETERS>
+
+  Parameters:
+    --help, -h        Display this usage help.
+    --username, -u    The dailymile.com username to export.
+
+  Options:
+    --debug, -d       Enable debug level logging.
+    --gear, -g        Enable download of gear info (not yet available)
+
+END
 
 
-my $dm_user = "";
-my $usage;
+sub usage {
+    print $usage_text;
+    exit;
+}
 
-#GetOptions....
+GetOptions ("help" => \$help,
+	    "debug" => \$debug,
+	    "gear"  => \$gear,
+	    "username=s" => \$dm_user)
+or usage();
 
+if ($gear) {
+    print "\nGear option is not yet available.\n";
+    usage();
+}
+
+if ($usage|$help) {
+    usage();
+}
+
+if (!($dm_user)) {
+    print "\nDailymile username is required.\n";
+    usage();
+}
+
+
+if ($debug) {
+    print "\nDEBUG enabled.\n";
+}
+
+
+
+print "hello $dm_user!  \n";
 
 
 
