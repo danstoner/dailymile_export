@@ -2,6 +2,7 @@ use LWP::UserAgent;
 use JSON::PP;
 use Text::CSV;
 use Getopt::Long;
+use POSIX qw(strftime);
 
 # command-line options
 my $dm_user;
@@ -59,36 +60,24 @@ if ($debug) {
 }
 
 
+# Begin
 
-print "hello $dm_user!  \n";
+my $page = 1;
+
+
+my $now_string = strftime "%Y%m%d%H%M%S", localtime;
+
+my $outputfile = $dm_user."_dailymile_export_p5.".$now_string.".tsv";
 
 
 
 __END__
 
-#### below this is the cloned perl6 code
-
-# replace this with proper args parsing
-if ! @*ARGS[0] {
- say "Usage:\n \n perl6 dailymile_export_to_tsv.p6 dailymile_username";
- exit;
-}
-if (@*ARGS[0] eq "-h") | (@*ARGS[0] eq "--help") {
- say "\nUsage:\n perl6 dailymile_export_to_tsv.p6 dailymile_username\n\n";
- exit;
-}
-
-my $dm_user = @*ARGS[0]; 
-
-
-my $page = 1;
-
-my $nowtime = DateTime.new(now);
-my $nowtimestring = $nowtime.year ~ $nowtime.month ~ $nowtime.day ~ $nowtime.hour ~ $nowtime.minute ~ $nowtime.second;
-
 ## try to create output file here
 ##
 ##
+
+
 
 my $api_url_entries = "http://api.dailymile.com/people/" ~ $dm_user ~ "/entries.json?page=" ~ $page;
 

@@ -73,7 +73,7 @@ nowtimestring = time.strftime("%Y%m%d%H%M%S")
 nowtimetime = str(time.time())  # just want some unique ms
 ms = nowtimetime.rsplit('.')[ len(nowtimetime.rsplit('.')) - 1]
 header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
-outputfile = dm_user+"_dailymile_export."+ nowtimestring + "." + ms + ".tsv"
+outputfile = dm_user+"_dailymile_export_py."+ nowtimestring + "." + ms + ".tsv"
 with open(outputfile,"w") as f:
     writer = UnicodeWriter(f,dialect='excel-tab')
     writer.writerow(header)
