@@ -67,9 +67,22 @@ my $page = 1;
 
 my $now_string = strftime "%Y%m%d%H%M%S", localtime;
 
-my $outputfile = $dm_user."_dailymile_export_p5.".$now_string.".tsv";
+my $outputfilename = $dm_user."_dailymile_export_p5.".$now_string.".tsv";
+my @headerrow = ("id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description");
+#["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
+
+my $csv = Text::CSV->new ( { binary => 1 } );
+
+# If cannot write to file, might as well stop here
+open my $fh, ">:encoding(utf8)", $outputfilename or die $outputfilename." ".$!;
+
+$status = $csv->print ($fh, @headerrow);
+
+# module usage not correct ^^^^
 
 
+
+print $status;
 
 __END__
 
