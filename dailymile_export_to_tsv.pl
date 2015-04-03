@@ -1,8 +1,14 @@
 use LWP::UserAgent;
 use JSON::PP;
+#use JSON qw (decode_json);
 use Text::CSV;
 use Getopt::Long;
 use POSIX qw(strftime);
+use Log::Message::Simple qw[msg error debug];
+use Data::Dumper; # mostly during debugging and testing
+
+use strict;
+use warnings;
 
 # command-line options
 my $dm_user;
@@ -23,7 +29,7 @@ Usage: dailymile_export_to_tsv.pl [OPTIONS] <PARAMETERS>
     --username, -u    The dailymile.com username to export.
 
   Options:
-    --debug, -d       Enable debug level logging.
+    --debug, -d       Enable debug level output.
     --gear, -g        Enable download of gear info (not yet available)
 
 END
@@ -45,7 +51,7 @@ if ($gear) {
     usage();
 }
 
-if ($usage|$help) {
+if ($help) {
     usage();
 }
 
@@ -56,18 +62,16 @@ if (!($dm_user)) {
 
 
 if ($debug) {
-    print "\nINFO: DEBUG enabled.\n";
+    debug ("DEBUG enabled.",1);
 }
 
 
 # Begin
 
-my $page = 1;
-
-
 my $now_string = strftime "%Y%m%d%H%M%S", localtime;
 
 my $outputfilename = $dm_user."_dailymile_export_p5.".$now_string.".tsv";
+
 my $headerrow = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"];
 #["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
 
@@ -75,14 +79,22 @@ my $csv = Text::CSV->new ( { binary => 1 } );
 $csv->column_names ($headerrow);
 
 # If cannot write to file, might as well stop here
-open my $fh, ">:encoding(utf8)", $outputfilename or die $outputfilename." ".$!;
+open my $fh, ">:encoding(utf8)", $outputfilename or die "Could not write to ".$outputfilename." ".$!;
+
+my $status = $csv->print ($fh, $headerrow) or die "Could not write to ".$outputfilename." ".$!;
+
+my $page = 1;
+
+my $api_url_entries = "https://api.dailymile.com/people/" . $dm_user . "/entries.json?page=" . $page;
+
+msg ( "First API Request: ". $api_url_entries , 1 );
 
 
-$status = $csv->print ($fh, $headerrow);
-#print $status;
+my $ua = LWP::UserAgent->new;
+my $response = $ua->get($api_url_entries);
 
-
-### here we are!
+my $json = decode_json $response->decoded_content;
+print Dumper($json);
 
 __END__
 
