@@ -86,19 +86,47 @@ my $status = $csv->print ($fh, $headerrow) or die "Could not write to ".$outputf
 # do the real work
 
 my $page = 1;
+my $keep_going = 1;
 my $api_url_entries = "https://api.dailymile.com/people/" . $dm_user . "/entries.json?page=" . $page;
 msg ( "First API Request: ". $api_url_entries , 1 );
 
 my $ua = LWP::UserAgent->new;
 my $response = $ua->get($api_url_entries);
-
-my $json = decode_json $response->decoded_content; # $json becomes a hash
+debug ($response->status_line,1);
 
 # print Dumper($json);
+my $json = decode_json $response->decoded_content; # $json becomes a hash
 
-for my $entry ( @{$json->{entries}} )
-{
-    print $entry->{id} . "," . $entry->{url} . "\n";
+if (!(exists ($json->{entries}[0]))) {
+    $keep_going = 0;
+}
+
+while (($response->is_success) && $keep_going) {
+#    debug ("inside loop",1);
+#    if (exists($json->{entries})) {
+#	debug ("exists json entries",1);
+       for my $entry ( @{$json->{entries}} )
+       {
+ 	   print $entry->{id} . "," . $entry->{url} . "\n";
+       }
+    $page += 1;
+    $api_url_entries = "https://api.dailymile.com/people/" . $dm_user . "/entries.json?page=" . $page;
+    msg ("Fetching: " . $api_url_entries, 1);
+    $response = $ua->get($api_url_entries);
+    debug ($response->status_line, 1);
+    $json = decode_json $response->decoded_content;
+    if (exists ($json->{entries}[0])) {
+	debug("here we will do some work",1);
+	# here we do work
+    }
+    else { $keep_going = 0;}
+#    }
+#else { 
+#    error ( $response->status_line . ": " . $api_url_entries, 1);
+}
+
+if (!($response->is_success)) {
+    error (  $response->status_line . ": " . $api_url_entries, 1);
 }
 
 
