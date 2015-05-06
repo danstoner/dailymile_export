@@ -101,14 +101,78 @@ if (!(exists ($json->{entries}[0]))) {
     $keep_going = 0;
 }
 
+my %results;
+
+# ## Process the page
+#     if( $pages_left && defined $data )
+# {
+#   ENTRIES: foreach my $entry ( @{ $data->{'entries'} } )
+#   {
+#         # print Dumper( $entry );    
+
+#         # See if we've gone past the start of the year  
+#       if( $entry->{'at'} =~ /2010/ )
+#       {
+#           $pages_left = 0;
+#           last ENTRIES;
+#       }
+      
+# #      if( $entry->{'workout'}{'activity_type'} eq 'Running' )
+#       { 
+# #          my ( $date ) = ( $entry->{'at'} =~ /([0-9-]+)T/ ); 
+#           # msg( $date . "," . $entry->{'workout'}{'distance'}{'value'} );
+      
+#           my %run =
+#           ( 
+#             'date'     => $date,
+# #            'distance' =>  $entry->{'workout'}{'distance'}{'value'}
+#           );
+      
+
 while (($response->is_success) && $keep_going) {
-#    debug ("inside loop",1);
-#    if (exists($json->{entries})) {
-#	debug ("exists json entries",1);
        for my $entry ( @{$json->{entries}} )
        {
- 	   print $entry->{id} . "," . $entry->{url} . "\n";
+	   my $id = $entry->{id};
+	   my $url = $entry->{url};
+	   my $timestamp = $entry->{at};
+	   print $id . "\n";
+	   # id, url, always seem to be present in source data.
+	   # Here we replace any empty values (undef) with empty string.
+	   my $title = $entry->{workout}{title};
+	   if ( ! defined $title ) {$title="";}
+	   my $activity_type = $entry->{workout}{activity_type};
+	   if ( ! defined $activity_type ) {$activity_type = "";}
+	   my $felt = $entry->{workout}{felt};
+	   if ( ! defined $felt ) {$felt = "";}
+	   my $duration_seconds = $entry->{workout}{duration};
+	   if ( ! defined $duration_seconds ) {$duration_seconds = "";}
+	   my $distance = $entry->{workout}{distance}{value};
+	   if ( ! defined $distance ) {$distance = "";}
+	   my $distance_units = $entry->{workout}{distance}{units};
+	   if ( ! defined $distance_units ) {$distance_units = "";}
+	   my $description = $entry->{message};
+	   if ( ! defined $description ) {$description = "";}
+	   @{$results{$id}} = (
+	       $id, 
+	       $url, 
+	       $timestamp,
+	       $title,
+	       $activity_type,
+	       $felt,
+	       $duration_seconds,
+	       $distance,
+	       $distance_units,
+	       $description
+	   );
+#	   $results{"url"} = $entry->{url};
+#	   $results{
+#####	#   print Dumper($results{$id});
+	   # my $tmpid = $results{"id"};
+	   # my $tmpurl = $results{"url"};
+	   # print $tmpid, $tmpurl, "\n";
+# 	   print $entry->{id} . "," . $entry->{url} . "\n";
        }
+#       print Dumper(%results);
     $page += 1;
     $api_url_entries = "https://api.dailymile.com/people/" . $dm_user . "/entries.json?page=" . $page;
     msg ("Fetching: " . $api_url_entries, 1);
