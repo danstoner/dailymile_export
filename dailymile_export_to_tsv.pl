@@ -196,9 +196,9 @@ while (($response->is_success) && $keep_going && ($page < $maxpages)) {
 
 for my $key (sort(keys %results)) {
 #    msg ("key: ". $key, 1);
-    my @colref = (@{%results->{$key}});
+    my $colref = (@{%results->{$key}});
     #print @colref;
-    $csv->print ($fh, @colref);   # nope. 
+    $csv->print ($fh, $colref);  
 }
 
 
