@@ -8,7 +8,11 @@ http://www.dailymile.com/api/documentation
 
 The python script dailymile_export_to_tsv.py is functional and provides export to tab-delimited file (.tsv).
 
+The perl 5 script dailymile_export_to_csv.pl is functional and provides export to csv-delimited file (.csv).
+
 ## Synopsis
+
+### Python
 
 ```
 $ python dailymile_export_to_tsv.py --help
@@ -26,6 +30,27 @@ optional arguments:
   -g, --gear   Retrieve gear data also.   [not yet implemented]
 ```
 
+### Perl
+
+```
+$ perl dailymile_export_to_csv.pl --help
+
+Description:
+
+  Script to download entries from the dailymile API for a particular user into a CSV.
+
+Usage: dailymile_export_to_tsv.pl [OPTIONS] <PARAMETERS>
+
+  Parameters:
+    --help, -h         Display this usage help.
+    --username, -u USERNAME
+                       The dailymile.com username to export (Required).
+  Options:
+    --debug, -d        Enable debug level output.
+    --gear, -g         Enable download of gear info (not yet available)
+    --maxpages, -m MAX
+                       Maximum number of pages to fetch (to limit http requests during testing)
+```
 
 ## Why write my own exporter?  
 
@@ -43,6 +68,8 @@ I am writing versions of the script in other languages for personal learning and
 I hope to export the gear information (so I can track shoe mileage) which isn't even available in the API.
 
 Maybe eventually I will include additional fields such as tags and weather.
+
+I have received a request to export GPS tracks, so I will probably look into that as well.
 
 ## Feedback?  
 
