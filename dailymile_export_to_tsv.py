@@ -15,9 +15,10 @@ except ImportError, e:
     raise SystemExit
 
 argparser = argparse.ArgumentParser(description='Script to download entries from the dailymile API for a particular user into a tab-delimited file.')
-argparser.add_argument("username", help="The dailymile.com username of the account to export.")
+argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", action="store_true", help="Enable debug level logging.")
-argparser.add_argument("-g", "--gear", action="store_true", help="Retrieve gear data also.")
+argparser.add_argument("-g", "--gear", action="store_true", help="Retrieve gear info for each entry. Note that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API).")
+#argparser.add_argument("-m", "--maxpages", action="store_int", help="Maximum number of API requests to make (to limit http requests during testing)") # not yet implemented
 args = argparser.parse_args()
 
 if args.debug:
@@ -25,11 +26,8 @@ if args.debug:
 else:
     logging.basicConfig(level=logging.INFO)
 
-dm_user = args.username
-
-if args.gear:
-    logging.info("*** Gear data downloads not yet enabled in this script. ***")
-
+dm_user = args.USERNAME
+gear_flag = args.gear
 
 # start at page 1 and go until we run out of data
 page = 1
@@ -68,12 +66,15 @@ class UnicodeWriter:
 
 # BEGIN
 
+def fetch_gear(entry_id):
+    skip
+
 # if we cannot open the output file might as well stop work here.
 # Using excel-tab as the output format (tab-delimited)
 nowtimestring = time.strftime("%Y%m%d%H%M%S")
 nowtimetime = str(time.time())  # just want some unique ms
 ms = nowtimetime.rsplit('.')[ len(nowtimetime.rsplit('.')) - 1]
-header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description"]
+header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description","gear"]
 outputfile = dm_user+"_dailymile_export_py."+ nowtimestring + "." + ms + ".tsv"
 with open(outputfile,"w") as f:
     writer = UnicodeWriter(f,dialect='excel-tab')
