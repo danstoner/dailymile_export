@@ -10,6 +10,11 @@ The python script dailymile_export_to_tsv.py is functional and provides export t
 
 The perl 5 script dailymile_export_to_csv.pl is functional and provides export to csv-delimited file (.csv).
 
+[Releases] (https://github.com/danstoner/dailymile_export/releases/latest) are considered stable. 
+
+The master branch may include experimental and broken features.
+
+
 ## Synopsis
 
 ### Python
