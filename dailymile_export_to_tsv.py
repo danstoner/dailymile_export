@@ -1,14 +1,15 @@
 try:
+    import argparse
+    from bs4 import BeautifulSoup
     import json
-    import requests
-    import time
     import logging
-    import csv
     import codecs
     import cStringIO
-    import traceback
+    import csv
+    import requests
     import sys
-    import argparse
+    import time
+    import traceback
 except ImportError, e:
     print "IMPORT ERROR: %s" % e
     raise SystemExit
