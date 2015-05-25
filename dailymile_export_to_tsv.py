@@ -17,7 +17,7 @@ except ImportError, e:
 argparser = argparse.ArgumentParser(description='Script to download entries from the dailymile API for a particular user into a tab-delimited file.')
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", action="store_true", help="Enable debug level logging.")
-argparser.add_argument("-g", "--gear", action="store_true", help="Retrieve extended info for each entry. This includes gear, effort and calories. Note that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
+argparser.add_argument("-e", "--extended", action="store_true", help="Retrieve extended info for each entry. This includes gear, effort, weather,  and calories. Note that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
 argparser.add_argument("-m", "--maxpages", type=int, help="Maximum number of API requests to make (to limit http requests during testing)")
 args = argparser.parse_args()
 
@@ -27,7 +27,7 @@ else:
     logging.basicConfig(level=logging.INFO)
 
 dm_user = args.USERNAME
-gear_flag = args.gear
+extended_flag = args.extended
 maxpages = args.maxpages
 
 # start at page 1 and go until we run out of data
@@ -133,7 +133,7 @@ while (r.status_code == 200) and (r_json["entries"]):
             logging.error("encode exception: " + traceback.format_exc())
             entry_dict[id].append("")
         except: entry_dict[id].append("")
-        if gear_flag:
+        if extended_flag:
             # do the soup here
             entry_dict[id].append("gear goes here")  # gear
             entry_dict[id].append("effort goes here")  # effort
