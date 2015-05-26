@@ -100,7 +100,7 @@ except requests.exceptions.HTTPError as e:
     raise SystemExit
 
 r_json=r.json()
-
+tmp = ""
 while (r.status_code == 200) and (r_json["entries"]):
     for entry in r_json["entries"]:
         # Every JSON record seems to include "id", "url", and "at"
@@ -135,9 +135,20 @@ while (r.status_code == 200) and (r_json["entries"]):
         except: entry_dict[id].append("")
         if extended_flag:
             # do the soup here
-            entry_dict[id].append("gear goes here")  # gear
-            entry_dict[id].append("effort goes here")  # effort
+            www_url_entry = "https://www.dailymile.com/people/" + dm_user + "/entries/" +str(id) + "/workout_data"
+            logging.info("Fetching extended info from "+www_url_entry)
+            #s = session.get(www_url_entry)
+            soup=BeautifulSoup(requests.get(www_url_entry).content)
+            
+
+            #entry_dict[id].append("gear goes here")  # gear
+            entry_dict[id].append(unicode(soup.select('ul.keyword_list.span')))
+            #entry_dict[id].append("effort goes here")  # effort
+            entry_dict[id].append(unicode(soup.select('ul.effort-rating.li')))  # effort
             entry_dict[id].append("weather goes here")  # weather
+            #entry_dict[id].append('')  # weather
+            
+            #entry_dict[id].append("calories goes here")  # calories
             entry_dict[id].append("calories goes here")  # calories
             
             # try:
@@ -154,7 +165,6 @@ while (r.status_code == 200) and (r_json["entries"]):
             
     page+=1
     if page > maxpages:
-        logging.info("Pages is greater than maxpages.")
         break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
