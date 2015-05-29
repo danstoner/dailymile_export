@@ -17,8 +17,8 @@ except ImportError, e:
 argparser = argparse.ArgumentParser(description='Script to download entries from the dailymile API for a particular user into a tab-delimited file.')
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", action="store_true", help="Enable debug level logging.")
-argparser.add_argument("-g", "--gear", action="store_true", help="Retrieve gear info for each entry. Note that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API).")
-#argparser.add_argument("-m", "--maxpages", action="store_int", help="Maximum number of API requests to make (to limit http requests during testing)") # not yet implemented
+argparser.add_argument("-e", "--extended", action="store_true", help="Retrieve extended info for each entry. This includes gear, effort, weather,  and calories. Note that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
+argparser.add_argument("-m", "--maxpages", type=int, help="Maximum number of API requests to make (to limit http requests during testing)")
 args = argparser.parse_args()
 
 if args.debug:
@@ -27,11 +27,11 @@ else:
     logging.basicConfig(level=logging.INFO)
 
 dm_user = args.USERNAME
-gear_flag = args.gear
+extended_flag = args.extended
+maxpages = args.maxpages
 
 # start at page 1 and go until we run out of data
 page = 1
-
 
 # UnicodeWriter class taken straight out of python docs
 # https://docs.python.org/2.7/library/csv.html#examples
@@ -65,16 +65,21 @@ class UnicodeWriter:
             self.writerow(row)
 
 # BEGIN
+session = requests.Session()
 
-def fetch_gear(entry_id):
-    skip
+def fetch_extended(entry_id):
+    www_url_entry="https://www.dailymile.com/people/"+dm_user+"/entries/"+str(entry_id)+"/workout_data"
+    print "fetching gear at "+www_url_entry
+    soup=BeautifulSoup(session.get(www_url_entry))
+    print (soup.prettify())
+    
 
 # if we cannot open the output file might as well stop work here.
 # Using excel-tab as the output format (tab-delimited)
 nowtimestring = time.strftime("%Y%m%d%H%M%S")
 nowtimetime = str(time.time())  # just want some unique ms
 ms = nowtimetime.rsplit('.')[ len(nowtimetime.rsplit('.')) - 1]
-header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description","gear"]
+header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description","gear","effort","weather","calories"]
 outputfile = dm_user+"_dailymile_export_py."+ nowtimestring + "." + ms + ".tsv"
 with open(outputfile,"w") as f:
     writer = UnicodeWriter(f,dialect='excel-tab')
@@ -82,21 +87,20 @@ with open(outputfile,"w") as f:
 
 entry_dict = dict()
 
-s = requests.Session()
 
 api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
 
 logging.info("First API Request: " + api_url_entries)
 
 try: 
-    r = s.get(api_url_entries)
+    r = requests.get(api_url_entries)
     r.raise_for_status()
 except requests.exceptions.HTTPError as e:
     logging.error(e)
     raise SystemExit
 
 r_json=r.json()
-
+tmp = ""
 while (r.status_code == 200) and (r_json["entries"]):
     for entry in r_json["entries"]:
         # Every JSON record seems to include "id", "url", and "at"
@@ -129,13 +133,45 @@ while (r.status_code == 200) and (r_json["entries"]):
             logging.error("encode exception: " + traceback.format_exc())
             entry_dict[id].append("")
         except: entry_dict[id].append("")
+        if extended_flag:
+            # do the soup here
+            www_url_entry = "https://www.dailymile.com/people/" + dm_user + "/entries/" +str(id) + "/workout_data"
+            logging.info("Fetching extended info from "+www_url_entry)
+            #s = session.get(www_url_entry)
+            soup=BeautifulSoup(requests.get(www_url_entry).content)
+            
+
+            #entry_dict[id].append("gear goes here")  # gear
+            entry_dict[id].append(unicode(soup.select('ul.keyword_list.span')))
+            #entry_dict[id].append("effort goes here")  # effort
+            entry_dict[id].append(unicode(soup.select('ul.effort-rating.li')))  # effort
+            entry_dict[id].append("weather goes here")  # weather
+            #entry_dict[id].append('')  # weather
+            
+            #entry_dict[id].append("calories goes here")  # calories
+            entry_dict[id].append("calories goes here")  # calories
+            
+            # try:
+            #     entry_dict[id].append(fetch_gear(id));
+            # except:
+            #     entry_dict[id].append("")
+            #     logging.error("Unable to append gear for id: "+str(id))
+        else:
+            # else we append empty columns
+            entry_dict[id].append("")  # gear
+            entry_dict[id].append("")  # effort
+            entry_dict[id].append("")  # weather
+            entry_dict[id].append("")  # calories
+            
     page+=1
+    if page > maxpages:
+        break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
     time.sleep(0.1)
     logging.info("Fetching: " + api_url_entries)
     try:
-        r = s.get(api_url_entries)
+        r = requests.get(api_url_entries)
         r.raise_for_status()
     except requests.exceptions.HTTPError as e:
         if r.status_code == 503:

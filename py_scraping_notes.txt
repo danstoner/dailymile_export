@@ -1,0 +1,139 @@
+In [1]: import requests
+
+In [6]: r = requests.get('http://www.dailymile.com/people/danstoner/entries/32841468/workout_data')
+
+In [20]: from pyquery import PyQuery as pq
+In [21]: d = pq(r.content)
+
+In [23]: r.content
+
+(formatted)
+<dl id="workout_details" class="details left"> 
+  <dt>Gear</dt>
+  <dd>
+    <ul class="keyword_list">
+      <li><a href="#" onclick="javascript: return false"><span>Topo ST</span></a></li>
+    </ul>
+  </dd>
+  <dt style="display: none">Effort</dt>
+  <dd style="display: none">
+    <ul class="effort-rating" style="display: block">
+      <li class="current-rating" style="width: 40%;">Currently 2/5 Effort.</li>
+    </ul>
+  </dd>
+  <dt>Weather</dt>
+  <dd>
+    <ul class="keyword_list">
+      <li><a href="#" onclick="javascript: return false"><span>hot</span></a></li>
+      <li><a href="#" onclick="javascript: return false"><span>sunny</span></a></li>
+    </ul>
+  </dd>
+  <dt style="display: none">Calories</dt>
+  <dd style="display: none">
+    351
+  </dd>
+</dl>
+
+
+
+
+
+In [44]: found = d.find('dt').items()
+In [46]: for each in found:
+    print "###"
+    print each
+   ....:     
+###
+<dt>Gear</dt>
+  
+###
+<dt style="display: none">Effort</dt>
+  
+###
+<dt>Weather</dt>
+  
+###
+<dt style="display: none">Calories</dt>
+  
+
+
+
+In [52]: [i.text() for i in d.items('span')]
+Out[52]: ['Topo ST', 'hot', 'sunny']
+
+
+In [54]: d.find('dt').text()
+Out[54]: 'Gear Effort Weather Calories'
+
+In [62]: types = (d.find('dt').text()).split()
+
+In [63]: types
+Out[63]: ['Gear', 'Effort', 'Weather', 'Calories']
+
+
+
+
+
+
+In [15]: soup = BeautifulSoup(r.content)
+
+In [127]: print (soup.prettify())
+<html>
+ <body>
+  <dl class="details left" id="workout_details">
+   <dt>
+    Gear
+   </dt>
+   <dd>
+    <ul class="keyword_list">
+     <li>
+      <a href="#" onclick="javascript: return false">
+       <span>
+        Topo ST
+       </span>
+      </a>
+     </li>
+    </ul>
+   </dd>
+   <dt style="display: none">
+    Effort
+   </dt>
+   <dd style="display: none">
+    <ul class="effort-rating" style="display: block">
+     <li class="current-rating" style="width: 40%;">
+      Currently 2/5 Effort.
+     </li>
+    </ul>
+   </dd>
+   <dt>
+    Weather
+   </dt>
+   <dd>
+    <ul class="keyword_list">
+     <li>
+      <a href="#" onclick="javascript: return false">
+       <span>
+        hot
+       </span>
+      </a>
+     </li>
+     <li>
+      <a href="#" onclick="javascript: return false">
+       <span>
+        sunny
+       </span>
+      </a>
+     </li>
+    </ul>
+   </dd>
+   <dt style="display: none">
+    Calories
+   </dt>
+   <dd style="display: none">
+    351
+   </dd>
+  </dl>
+  <div class="clearl empty_div">
+  </div>
+ </body>
+</html>
