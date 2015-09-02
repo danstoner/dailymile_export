@@ -20,5 +20,4 @@ CREATE table imported_entries_p5 (id integer primary key, url text, entry_date t
 # I place the .tsv export file in /tmp before trying to load it into the db.
 
 
-## Still need to research the proper pg line...
-#COPY imported_entries_p5 FROM '/tmp/danstoner_dailymile_export.csv' WITH DELIMITER AS '\t' CSV HEADER;
+COPY imported_entries_p5 FROM '/tmp/danstoner_dailymile_export.csv' WITH DELIMITER AS '\t' CSV HEADER;
