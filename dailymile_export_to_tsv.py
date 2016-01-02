@@ -1,6 +1,6 @@
 try:
     import argparse
-    from bs4 import BeautifulSoup
+#    from bs4 import BeautifulSoup
     import json
     import logging
     import codecs
@@ -18,7 +18,7 @@ argparser = argparse.ArgumentParser(description='Script to download entries from
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", action="store_true", help="Enable debug level logging.")
 argparser.add_argument("-e", "--extended", action="store_true", help="Retrieve extended info for each entry. This includes gear, effort, weather,  and calories. Note that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
-argparser.add_argument("-m", "--maxpages", type=int, help="Maximum number of API requests to make (to limit http requests during testing)")
+argparser.add_argument("-m", "--maxpages", type=int, default=100, help="Maximum number of API requests to make (to limit http requests during testing)")
 args = argparser.parse_args()
 
 if args.debug:
@@ -90,6 +90,7 @@ entry_dict = dict()
 
 api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
 
+logging.info("Max Pages = {0}".format(maxpages))
 logging.info("First API Request: " + api_url_entries)
 
 try: 
@@ -165,6 +166,7 @@ while (r.status_code == 200) and (r_json["entries"]):
             
     page+=1
     if page > maxpages:
+        logging.warning("Stopped processing. Hit maxpages limit. Use -m to set a larger value.")
         break
     api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
