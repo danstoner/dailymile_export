@@ -18,8 +18,9 @@ except ImportError, e:
 argparser = argparse.ArgumentParser(description='Script to download entries from the dailymile API for a particular user into a tab-delimited file.')
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", action="store_true", help="Enable debug level logging.")
-argparser.add_argument("-e", "--extended", action="store_true", help="Retrieve extended info for each entry. This includes gear, effort, weather,  and calories. Note that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
+argparser.add_argument("-e", "--extended", action="store_true", help="Retrieve extended info for each entry. This currently only includes gear and effort. that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
 argparser.add_argument("-m", "--maxpages", type=int, default=100, help="Maximum number of API requests to make (to limit http requests during testing)")
+argparser.add_argument("-w", "--disablewarnings", action="store_true", help="Disable urllib warnings such as SSL errors.")
 args = argparser.parse_args()
 
 if args.debug:
@@ -30,6 +31,10 @@ else:
 dm_user = args.USERNAME
 extended_flag = args.extended
 maxpages = args.maxpages
+
+if args.disablewarnings:
+    requests.packages.urllib3.disable_warnings()
+
 
 # start at page 1 and go until we run out of data
 page = 1
@@ -70,9 +75,10 @@ session = requests.Session()
 
 def fetch_extended(entry_id):
     www_url_entry="https://www.dailymile.com/people/"+dm_user+"/entries/"+str(entry_id)+"/workout_data"
-    print "fetching gear at "+www_url_entry
-    soup=BeautifulSoup(session.get(www_url_entry))
-    print (soup.prettify())
+    logging.info("fetching extended info at ",www_url_entry)
+    #soup=BeautifulSoup(session.get(www_url_entry))
+    #print (soup.prettify())
+    
     
 
 # if we cannot open the output file might as well stop work here.
@@ -80,7 +86,7 @@ def fetch_extended(entry_id):
 nowtimestring = time.strftime("%Y%m%d%H%M%S")
 nowtimetime = str(time.time())  # just want some unique ms
 ms = nowtimetime.rsplit('.')[ len(nowtimetime.rsplit('.')) - 1]
-header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description","gear","effort","weather","calories"]
+header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description","effort","gear","weather","calories"]
 outputfile = dm_user+"_dailymile_export_py."+ nowtimestring + "." + ms + ".tsv"
 with open(outputfile,"w") as f:
     writer = UnicodeWriter(f,dialect='excel-tab')
@@ -139,14 +145,26 @@ while (r.status_code == 200) and (r_json["entries"]):
             # do the soup here
             www_url_entry = "https://www.dailymile.com/people/" + dm_user + "/entries/" +str(id) + "/workout_data"
             logging.info("Fetching extended info from "+www_url_entry)
+            r = requests.get(www_url_entry)
+            r.raise_for_status()
+            blurb = pq(r.content)
+            try: entry_dict[id].append(blurb('li.current-rating').text())
+            except: entry_dict[id].append("")
+            gear = ''
+            for detail in blurb('dt'):
+                if detail.text == 'Gear':
+                    gear = blurb.find('span').text()
+            try: entry_dict[id].append(gear)
+            except: entry_dict[id].append("")
+            
             #s = session.get(www_url_entry)
-            soup=BeautifulSoup(requests.get(www_url_entry).content)
+            #soup=BeautifulSoup(requests.get(www_url_entry).content)
             
 
             #entry_dict[id].append("gear goes here")  # gear
-            entry_dict[id].append(unicode(soup.select('ul.keyword_list.span')))
+##            entry_dict[id].append(unicode(soup.select('ul.keyword_list.span')))
             #entry_dict[id].append("effort goes here")  # effort
-            entry_dict[id].append(unicode(soup.select('ul.effort-rating.li')))  # effort
+##            entry_dict[id].append(unicode(soup.select('ul.effort-rating.li')))  # effort
             entry_dict[id].append("weather goes here")  # weather
             #entry_dict[id].append('')  # weather
             
@@ -160,8 +178,8 @@ while (r.status_code == 200) and (r_json["entries"]):
             #     logging.error("Unable to append gear for id: "+str(id))
         else:
             # else we append empty columns
-            entry_dict[id].append("")  # gear
-            entry_dict[id].append("")  # effort
+#            entry_dict[id].append("")  # effort
+#            entry_dict[id].append("")  # gear
             entry_dict[id].append("")  # weather
             entry_dict[id].append("")  # calories
             
