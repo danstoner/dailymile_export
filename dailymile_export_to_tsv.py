@@ -10,6 +10,7 @@ try:
     import sys
     import time
     import traceback
+    from pyquery import PyQuery as pq
 except ImportError, e:
     print "IMPORT ERROR: %s" % e
     raise SystemExit
