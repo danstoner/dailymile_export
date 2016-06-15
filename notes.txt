@@ -262,3 +262,21 @@ $ curl -s https://www.dailymile.com/people/danstoner/entries/28601037/workout_da
 </dl>
 <div class="clearl empty_div"></div>
 
+
+
+API for single entry is of the form http://api.dailymile.com/entries/<entry>.json
+
+For example:
+
+(an image)
+http://www.dailymile.com/people/danstoner/entries/35419201
+vs
+http://api.dailymile.com/entries/35419201.json
+
+
+
+(a workout)
+http://www.dailymile.com/people/danstoner/entries/35542790
+vs
+http://api.dailymile.com/entries/35542790.json
+
