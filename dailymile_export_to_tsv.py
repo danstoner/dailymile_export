@@ -34,7 +34,10 @@ maxpages = args.maxpages
 
 if args.disablewarnings:
     requests.packages.urllib3.disable_warnings()
-
+if extended_flag:
+    SLEEP_TIME = 0
+else:
+    SLEEP_TIME = 0.1
 
 # start at page 1 and go until we run out of data
 page = 1
@@ -74,7 +77,7 @@ class UnicodeWriter:
 session = requests.Session()
 
 def fetch_extended(entry_id):
-    www_url_entry="https://www.dailymile.com/people/"+dm_user+"/entries/"+str(entry_id)+"/workout_data"
+    www_url_entry="http://www.dailymile.com/people/"+dm_user+"/entries/"+str(entry_id)+"/workout_data"
     logging.info("fetching extended info at ",www_url_entry)
     #soup=BeautifulSoup(session.get(www_url_entry))
     #print (soup.prettify())
@@ -95,7 +98,7 @@ with open(outputfile,"w") as f:
 entry_dict = dict()
 
 
-api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
+api_url_entries="http://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
 
 logging.info("Max Pages = {0}".format(maxpages))
 logging.info("First API Request: " + api_url_entries)
@@ -142,7 +145,7 @@ while (r.status_code == 200) and (r_json["entries"]):
             entry_dict[id].append("")
         except: entry_dict[id].append("")
         if extended_flag:
-            www_url_entry = "https://www.dailymile.com/people/" + dm_user + "/entries/" +str(id) + "/workout_data"
+            www_url_entry = "http://www.dailymile.com/people/" + dm_user + "/entries/" +str(id) + "/workout_data"
             logging.info("Fetching extended info from "+www_url_entry)
             r = requests.get(www_url_entry)
             r.raise_for_status()
@@ -187,9 +190,9 @@ while (r.status_code == 200) and (r_json["entries"]):
     if page > maxpages:
         logging.warning("Stopped processing. Hit maxpages limit. Use -m to set a larger value.")
         break
-    api_url_entries="https://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
+    api_url_entries="http://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
-    time.sleep(0.1)
+    time.sleep(SLEEP_TIME)
     logging.info("Fetching: " + api_url_entries)
     try:
         r = requests.get(api_url_entries)
