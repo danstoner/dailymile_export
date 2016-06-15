@@ -142,12 +142,12 @@ while (r.status_code == 200) and (r_json["entries"]):
             entry_dict[id].append("")
         except: entry_dict[id].append("")
         if extended_flag:
-            # do the soup here
             www_url_entry = "https://www.dailymile.com/people/" + dm_user + "/entries/" +str(id) + "/workout_data"
             logging.info("Fetching extended info from "+www_url_entry)
             r = requests.get(www_url_entry)
             r.raise_for_status()
-            blurb = pq(r.content)
+            # add some phony tags to handle empty content situation which pyquery does not like
+            blurb = pq('<document>' + r.content + '</document>')
             try: entry_dict[id].append(blurb('li.current-rating').text())
             except: entry_dict[id].append("")
             gear = ''
