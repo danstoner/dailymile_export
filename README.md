@@ -21,18 +21,28 @@ The master branch may include experimental and broken features.
 
 ```
 $ python dailymile_export_to_tsv.py --help
-usage: dailymile_export_to_tsv.py [-h] [-d] [-g] username
+usage: dailymile_export_to_tsv.py [-h] [-d] [-e] [-m MAXPAGES] [-w] USERNAME
 
 Script to download entries from the dailymile API for a particular user into a
 tab-delimited file.
 
 positional arguments:
-  username     The dailymile.com username of the account to export.
+  USERNAME              The dailymile.com username of the account to export.
 
 optional arguments:
-  -h, --help   show this help message and exit
-  -d, --debug  Enable debug level logging.
-  -g, --gear   Retrieve gear data also.   [not yet implemented]
+  -h, --help            show this help message and exit
+  -d, --debug           Enable debug level logging.
+  -e, --extended        Retrieve extended info for each entry. This currently
+                        only includes gear and effort. that this will greatly
+                        impact performance since every single entry will
+                        require a web request (gear data is not available via
+                        the API). Posts must not be set to private in
+                        dailymile.
+  -m MAXPAGES, --maxpages MAXPAGES
+                        Maximum number of API requests to make (to limit http
+                        requests during testing)
+  -w, --disablewarnings
+                        Disable urllib warnings such as SSL errors.
 ```
 
 ### Perl
@@ -70,9 +80,7 @@ my data out (and be able to analyze it with my own tools, etc.).
 
 I am writing versions of the script in other languages for personal learning and comparison.
 
-I hope to export the gear information (so I can track shoe mileage) which isn't even available in the API.
-
-Maybe eventually I will include additional fields such as tags and weather.
+Eventually I hope to include additional Tags and other ancillary data.
 
 I have received a request to export GPS tracks, so I will probably look into that as well.
 
