@@ -18,9 +18,9 @@ except ImportError, e:
 argparser = argparse.ArgumentParser(description='Script to download entries from the dailymile API for a particular user into a tab-delimited file.')
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug level logging.")
-argparser.add_argument("-e", "--extended", default=False, action="store_true", help="Retrieve extended info for each entry. This currently only includes gear and effort. that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
+argparser.add_argument("-e", "--extended", default=False, action="store_true", help="Retrieve extended info for each entry. Extended gear includes Effort, Gear, Weather, and Calories. Tthis will SIGNIFICANTLY impact performance since every single entry will require an additional web request (extended data is not available via the API). Posts must not be set to private in dailymile.")
 argparser.add_argument("-m", "--maxpages", type=int, default=100, help="Maximum number of API requests to make (to limit http requests during testing)")
-argparser.add_argument("-w", "--disablewarnings", action="store_true", help="Disable urllib warnings such as SSL errors.")
+argparser.add_argument("-w", "--disablewarnings", action="store_true", help="Disable urllib3 warnings.")
 args = argparser.parse_args()
 
 if args.debug:
@@ -79,13 +79,6 @@ class UnicodeWriter:
 
 # BEGIN
 
-# def fetch_extended(entry_id):
-#     www_url_entry="http://www.dailymile.com/people/"+dm_user+"/entries/"+str(entry_id)+"/workout_data"
-#     logging.info("fetching extended info at ",www_url_entry)
-#     #soup=BeautifulSoup(session.get(www_url_entry))
-#     #print (soup.prettify())
-    
-    
 
 # if we cannot open the output file might as well stop work here.
 # Using excel-tab as the output format (tab-delimited)
@@ -150,21 +143,6 @@ while (r.status_code == 200) and (r_json["entries"]):
         if extended_flag:
             www_url_entry = "http://www.dailymile.com/people/" + dm_user + "/entries/" +str(id) + "/workout_data"
             logging.info("Fetching extended info from "+www_url_entry)
-            r = requests.get(www_url_entry)
-            r.raise_for_status()
-
-            ## old pyquery stuff
-            ## add some phony tags to handle empty content situation which pyquery does not like
-            ##blurb = pq('<document>' + r.content + '</document>')
-            ##try: entry_dict[id].append(blurb('li.current-rating').text())
-            ##except: entry_dict[id].append("")
-            ##gear = ''
-            ##for detail in blurb('dt'):
-            ##    if detail.text == 'Gear':
-            ##        gear = blurb.find('span').text()
-            ##try: entry_dict[id].append(gear)
-            ##except: entry_dict[id].append("")
-            
 
             r = requests.get(www_url_entry)
             r.raise_for_status()
@@ -208,23 +186,6 @@ while (r.status_code == 200) and (r_json["entries"]):
                 entry_dict[id].append(extended_stuff['Calories'])
             else:
                 entry_dict[id].append("")
-
-            #entry_dict[id].append("gear goes here")  # gear
-##            entry_dict[id].append(unicode(soup.select('ul.keyword_list.span')))
-            #entry_dict[id].append("effort goes here")  # effort
-##            entry_dict[id].append(unicode(soup.select('ul.effort-rating.li')))  # effort
-
-#            entry_dict[id].append("weather goes here")  # weather
-            #entry_dict[id].append('')  # weather
-            
-            #entry_dict[id].append("calories goes here")  # calories
-#            entry_dict[id].append("calories goes here")  # calories
-            
-            # try:
-            #     entry_dict[id].append(fetch_gear(id));
-            # except:
-            #     entry_dict[id].append("")
-            #     logging.error("Unable to append gear for id: "+str(id))
         else:
             # else we append empty columns
             entry_dict[id].append("")  # effort
