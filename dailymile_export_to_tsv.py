@@ -1,6 +1,6 @@
 try:
     import argparse
-#    from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup
     import json
     import logging
     import codecs
@@ -10,15 +10,15 @@ try:
     import sys
     import time
     import traceback
-    from pyquery import PyQuery as pq
+#    from pyquery import PyQuery as pq
 except ImportError, e:
     print "IMPORT ERROR: %s" % e
     raise SystemExit
 
 argparser = argparse.ArgumentParser(description='Script to download entries from the dailymile API for a particular user into a tab-delimited file.')
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
-argparser.add_argument("-d", "--debug", action="store_true", help="Enable debug level logging.")
-argparser.add_argument("-e", "--extended", action="store_true", help="Retrieve extended info for each entry. This currently only includes gear and effort. that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
+argparser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug level logging.")
+argparser.add_argument("-e", "--extended", default=False, action="store_true", help="Retrieve extended info for each entry. This currently only includes gear and effort. that this will greatly impact performance since every single entry will require a web request (gear data is not available via the API). Posts must not be set to private in dailymile.")
 argparser.add_argument("-m", "--maxpages", type=int, default=100, help="Maximum number of API requests to make (to limit http requests during testing)")
 argparser.add_argument("-w", "--disablewarnings", action="store_true", help="Disable urllib warnings such as SSL errors.")
 args = argparser.parse_args()
@@ -27,6 +27,9 @@ if args.debug:
     logging.basicConfig(level=logging.DEBUG)
 else:
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+#    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 dm_user = args.USERNAME
 extended_flag = args.extended
@@ -34,6 +37,7 @@ maxpages = args.maxpages
 
 if args.disablewarnings:
     requests.packages.urllib3.disable_warnings()
+
 if extended_flag:
     SLEEP_TIME = 0
 else:
@@ -74,13 +78,12 @@ class UnicodeWriter:
             self.writerow(row)
 
 # BEGIN
-session = requests.Session()
 
-def fetch_extended(entry_id):
-    www_url_entry="http://www.dailymile.com/people/"+dm_user+"/entries/"+str(entry_id)+"/workout_data"
-    logging.info("fetching extended info at ",www_url_entry)
-    #soup=BeautifulSoup(session.get(www_url_entry))
-    #print (soup.prettify())
+# def fetch_extended(entry_id):
+#     www_url_entry="http://www.dailymile.com/people/"+dm_user+"/entries/"+str(entry_id)+"/workout_data"
+#     logging.info("fetching extended info at ",www_url_entry)
+#     #soup=BeautifulSoup(session.get(www_url_entry))
+#     #print (soup.prettify())
     
     
 
@@ -89,7 +92,7 @@ def fetch_extended(entry_id):
 nowtimestring = time.strftime("%Y%m%d%H%M%S")
 nowtimetime = str(time.time())  # just want some unique ms
 ms = nowtimetime.rsplit('.')[ len(nowtimetime.rsplit('.')) - 1]
-header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description","effort","gear","weather","calories"]
+header = ["id","url","timestamp","title","activity_type","felt","duration_seconds","distance","distance_units","description","effort_outof_5","gear","weather","calories"]
 outputfile = dm_user+"_dailymile_export_py."+ nowtimestring + "." + ms + ".tsv"
 with open(outputfile,"w") as f:
     writer = UnicodeWriter(f,dialect='excel-tab')
@@ -149,30 +152,73 @@ while (r.status_code == 200) and (r_json["entries"]):
             logging.info("Fetching extended info from "+www_url_entry)
             r = requests.get(www_url_entry)
             r.raise_for_status()
-            # add some phony tags to handle empty content situation which pyquery does not like
-            blurb = pq('<document>' + r.content + '</document>')
-            try: entry_dict[id].append(blurb('li.current-rating').text())
-            except: entry_dict[id].append("")
-            gear = ''
-            for detail in blurb('dt'):
-                if detail.text == 'Gear':
-                    gear = blurb.find('span').text()
-            try: entry_dict[id].append(gear)
-            except: entry_dict[id].append("")
+
+            ## old pyquery stuff
+            ## add some phony tags to handle empty content situation which pyquery does not like
+            ##blurb = pq('<document>' + r.content + '</document>')
+            ##try: entry_dict[id].append(blurb('li.current-rating').text())
+            ##except: entry_dict[id].append("")
+            ##gear = ''
+            ##for detail in blurb('dt'):
+            ##    if detail.text == 'Gear':
+            ##        gear = blurb.find('span').text()
+            ##try: entry_dict[id].append(gear)
+            ##except: entry_dict[id].append("")
             
-            #s = session.get(www_url_entry)
-            #soup=BeautifulSoup(requests.get(www_url_entry).content)
+
+            r = requests.get(www_url_entry)
+            r.raise_for_status()
+            soup = BeautifulSoup(r.content)
+            dt_items = soup.find_all("dt")
+            dd_items = soup.find_all("dd")
+            dt_texts = []
+            dd_texts = []
+            texts = {}
+            for each in dt_items:
+                dt_texts.append(each.text)
+                if each.text not in ('Effort', 'Gear', 'Weather', 'Calories'):
+                    logging.info("FOUND additional extended field: ", each.text)
+            for each in dd_items:
+                dd_texts.append(each.text.strip('\n').strip(' ').strip('\n'))
+
+            extended_stuff = {}
+            for i in range(0, len(dt_texts)):
+                extended_stuff[dt_texts[i]] = dd_texts[i]
+
+            if 'Effort' in extended_stuff:
+                effort_loc = extended_stuff['Effort'].find('/') - 1
+                extended_stuff['Effort'] = extended_stuff['Effort'][effort_loc]
+                entry_dict[id].append(extended_stuff['Effort'])
+            else:
+                entry_dict[id].append("")
+
+            if 'Gear' in extended_stuff:
+                entry_dict[id].append(extended_stuff['Gear'])
+            else:
+                entry_dict[id].append("")
+
+            if 'Weather' in extended_stuff:
+                extended_stuff['Weather'] = extended_stuff['Weather'].replace('\n',' ')
+                entry_dict[id].append(extended_stuff['Weather'])                
+            else:
+                entry_dict[id].append("")
             
+            if 'Calories' in extended_stuff:
+                extended_stuff['Calories'] = extended_stuff['Calories']
+                entry_dict[id].append(extended_stuff['Calories'])
+            else:
+                entry_dict[id].append("")
 
             #entry_dict[id].append("gear goes here")  # gear
 ##            entry_dict[id].append(unicode(soup.select('ul.keyword_list.span')))
             #entry_dict[id].append("effort goes here")  # effort
 ##            entry_dict[id].append(unicode(soup.select('ul.effort-rating.li')))  # effort
-            entry_dict[id].append("weather goes here")  # weather
+
+#            entry_dict[id].append("weather goes here")  # weather
             #entry_dict[id].append('')  # weather
             
             #entry_dict[id].append("calories goes here")  # calories
-            entry_dict[id].append("calories goes here")  # calories
+#            entry_dict[id].append("calories goes here")  # calories
             
             # try:
             #     entry_dict[id].append(fetch_gear(id));
@@ -181,8 +227,8 @@ while (r.status_code == 200) and (r_json["entries"]):
             #     logging.error("Unable to append gear for id: "+str(id))
         else:
             # else we append empty columns
-#            entry_dict[id].append("")  # effort
-#            entry_dict[id].append("")  # gear
+            entry_dict[id].append("")  # effort
+            entry_dict[id].append("")  # gear
             entry_dict[id].append("")  # weather
             entry_dict[id].append("")  # calories
             
