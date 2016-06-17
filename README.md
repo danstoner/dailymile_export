@@ -32,17 +32,17 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -d, --debug           Enable debug level logging.
-  -e, --extended        Retrieve extended info for each entry. This currently
-                        only includes gear and effort. that this will greatly
-                        impact performance since every single entry will
-                        require a web request (gear data is not available via
-                        the API). Posts must not be set to private in
-                        dailymile.
+  -e, --extended        Retrieve extended info for each entry. Extended gear
+                        includes Effort, Gear, Weather, and Calories. Tthis
+                        will SIGNIFICANTLY impact performance since every
+                        single entry will require an additional web request
+                        (extended data is not available via the API). Posts
+                        must not be set to private in dailymile.
   -m MAXPAGES, --maxpages MAXPAGES
                         Maximum number of API requests to make (to limit http
                         requests during testing)
   -w, --disablewarnings
-                        Disable urllib warnings such as SSL errors.
+                        Disable urllib3 warnings.
 ```
 
 ### Perl
