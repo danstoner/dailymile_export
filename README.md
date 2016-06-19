@@ -113,6 +113,9 @@ id     url   timestamp	title	activity_type	felt	duration_seconds	distance	distan
 35478396     http://www.dailymile.com/entries/35478396	2016-05-17T14:39:49Z	warm up and down  Running    alright	    1200	   1.85		 miles		       2 Altra Samson 	    251
 ```
 
+Full samples are available in the "output_files" directory of the project.
+
+
 ### Perl
 
 ```
