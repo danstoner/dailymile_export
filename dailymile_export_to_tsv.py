@@ -19,7 +19,7 @@ argparser = argparse.ArgumentParser(description='Script to download entries from
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug level logging.")
 argparser.add_argument("-e", "--extended", default=False, action="store_true", help="Retrieve extended info for each entry. Extended gear includes Effort, Gear, Weather, and Calories. Tthis will SIGNIFICANTLY impact performance since every single entry will require an additional web request (extended data is not available via the API). Posts must not be set to private in dailymile.")
-argparser.add_argument("-m", "--maxpages", type=int, default=100, help="Maximum number of API requests to make (to limit http requests during testing)")
+argparser.add_argument("-m", "--maxpages", type=int, default=150, help="Maximum number of API requests to make (to limit http requests during testing)")
 argparser.add_argument("-w", "--disablewarnings", action="store_true", help="Disable urllib3 warnings.")
 args = argparser.parse_args()
 
