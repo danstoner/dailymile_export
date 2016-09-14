@@ -20,8 +20,11 @@ CREATE table imported_entries (id integer primary key, url text, entry_date time
 # file path / location and file permissions.
 # I place the .tsv export file in /tmp before trying to load it into the db.
 
-COPY imported_entries FROM '/tmp/danstoner_dailymile_export.tsv' WITH DELIMITER AS '\t' CSV HEADER;
+# COPY imported_entries FROM '/tmp/danstoner_dailymile_export.tsv' WITH DELIMITER AS '\t' CSV HEADER;
 
-## Alternative command using the postgresql \COPY command. Note there is no semicolon for \ commands.
+## Alternative command using the psql \copy command rather than the SQL COPY. 
+## Note there is no semicolon for \ commands.
 ##
-## \COPY imported_entries FROM '/tmp/danstoner_dailymile_export.tsv' WITH DELIMITER AS '\t' CSV HEADER
+## \copy imported_entries FROM '/tmp/danstoner_dailymile_export.tsv' WITH DELIMITER AS '\t' CSV HEADER
+### Seem to need the special reference with leading "E" to designate tab character
+## \copy imported_entries FROM '/tmp/danstoner_dailymile_export.tsv' USING DELIMITERS E'\t' CSV HEADER
