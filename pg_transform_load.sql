@@ -15,9 +15,8 @@ CREATE TABLE  entries (
 
 -- Create some useful stored procedures for runners
 
-
-CREATE OR REPLACE FUNCTION miles_to_km (miles NUMERIC(3,2))
-RETURNS NUMERIC(3,2) AS $$
+CREATE OR REPLACE FUNCTION miles_to_km (miles NUMERIC) 
+RETURNS NUMERIC AS $$
 BEGIN
 RETURN (miles * 1.61)::NUMERIC(3,1);
 END;
@@ -30,8 +29,8 @@ $$ LANGUAGE plpgsql;
 -- (1 row)
 
 
-CREATE OR REPLACE FUNCTION km_to_miles (km NUMERIC(3,2))
-RETURNS NUMERIC(3,2) AS $$
+CREATE OR REPLACE FUNCTION km_to_miles (km NUMERIC)
+RETURNS NUMERIC AS $$
 BEGIN
 RETURN (km * 0.62)::NUMERIC(3,1);
 END;
