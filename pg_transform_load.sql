@@ -57,7 +57,7 @@ CREATE TABLE  entries (
 -- Transform and load the entries table from the raw import table 
 --
 \echo Inserting...
-INSERT INTO entries (id, url, entry_date, title, activity_type, felt, duration_time_seconds, description, effort_out_of_5, gear, weather, calories)
+INSERT INTO entries (id, url, entry_date, title, activity_type, felt, duration_time_seconds, description, effort_outof_5, gear, weather, calories)
 SELECT id, url, entry_date, title, activity_type, felt, duration_time_seconds, description, effort_outof_5, gear, weather, calories from imported_entries;
 
 \echo Updating distance_in_km
