@@ -108,3 +108,7 @@ UPDATE running_entries SET pace_per_km = '59:59:59' where pace_per_km = '00:00:0
 --  35281689 | Hogtown 5k Beer Run                    | 00:18:47     |            3.2000 |         5.2000 | 00:05:52.1875   | 00:03:36.730769
 --  23711830 | Melon Run 3 mile race                  | 00:17:41     |            3.0000 |         4.8000 | 00:05:53.666667 | 00:03:41.041667
 -- (20 rows)
+
+
+-- To EXPORT to a TSV, use the \copy psql command:
+-- \COPY running_entries TO '/tmp/danstoner_dailymile_running_entries_post-ETL.tsv' WITH CSV HEADER 
