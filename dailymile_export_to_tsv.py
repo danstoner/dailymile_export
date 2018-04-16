@@ -41,7 +41,7 @@ if args.disablewarnings:
 if extended_flag:
     SLEEP_TIME = 0
 else:
-    SLEEP_TIME = 0.1
+    SLEEP_TIME = .2
 
 # start at page 1 and go until we run out of data
 page = 1
@@ -146,7 +146,7 @@ while (r.status_code == 200) and (r_json["entries"]):
 
             r = requests.get(www_url_entry)
             r.raise_for_status()
-            soup = BeautifulSoup(r.content)
+            soup = BeautifulSoup(r.content, "html.parser")
             dt_items = soup.find_all("dt")
             dd_items = soup.find_all("dd")
             dt_texts = []
@@ -200,18 +200,33 @@ while (r.status_code == 200) and (r_json["entries"]):
     api_url_entries="http://api.dailymile.com/people/" + dm_user + "/entries.json?page=" + str(page)
     # give the API a break
     time.sleep(SLEEP_TIME)
-    logging.info("Fetching: " + api_url_entries)
-    try:
-        r = requests.get(api_url_entries)
-        r.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        if r.status_code == 503:
-            logging.error("May have hit Requests per hour limit. Please retry later. Received: " + str(e))
-            break
-        else:
-            logging.error("Error on GET request. Received: " + str(e))
-            break
-    r_json=r.json()
+
+    retries=3
+    abort = False
+    while retries > 0:
+        try:
+            logging.info("Fetching: " + api_url_entries)
+            r = requests.get(api_url_entries)
+            r.raise_for_status()
+            retries=0
+        except requests.exceptions.HTTPError as e:
+            if r.status_code == 500:
+                retries-=1
+                logging.error("API returned 500 Internal Server Error. Retrying shortly...")
+                time.sleep(5)
+            elif r.status_code == 503:
+                logging.error("May have hit Requests per hour limit. Please retry later. Received: " + str(e))
+                abort = True
+                break # out of retries loop
+            else:
+                retries-=1
+                logging.error("Error on GET request. Retrying Shortly... Error received: " + str(e))
+                time.sleep(5)
+    if abort==False and retries == 0:
+        r_json=r.json()
+    else:
+        logging.error("Out of retries or fatal error occurred.")
+        break  # out of downloads loop
 
 # The ids look like sequential numbers, sorting by id may go a long way towards getting the entries in chronological order
 sorted_keys = sorted(entry_dict.keys())
