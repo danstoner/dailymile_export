@@ -63,9 +63,7 @@ if (!($dm_user)) {
     usage();
 }
 
-if ($debug) {
-    debug ("DEBUG enabled.",1);
-}
+debug ("DEBUG enabled.",$debug);
 
 if (! $maxpages) {
     $maxpages = 1000;
@@ -94,7 +92,7 @@ msg ( "Fetching: ". $api_url_entries , 1 );
 
 my $ua = LWP::UserAgent->new;
 my $response = $ua->get($api_url_entries);
-debug ($response->status_line,1);
+debug ($response->status_line,$debug);
 
 # print Dumper($json);
 my $json = decode_json $response->decoded_content; # $json becomes a hash
@@ -138,7 +136,7 @@ while (($response->is_success) && $keep_going && ($page < $maxpages)) {
     $api_url_entries = "https://api.dailymile.com/people/" . $dm_user . "/entries.json?page=" . $page;
     msg ("Fetching: " . $api_url_entries, 1);
     $response = $ua->get($api_url_entries);
-    debug ($response->status_line, 1);
+    debug ($response->status_line, $debug);
     if (!($response->is_success)) {
 	error (  $response->status_line . ": " . $api_url_entries, 1);
 	die;
