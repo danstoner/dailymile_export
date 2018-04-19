@@ -19,6 +19,7 @@ argparser = argparse.ArgumentParser(description='Script to download entries from
 argparser.add_argument("USERNAME", help="The dailymile.com username of the account to export.")
 argparser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug level logging.")
 argparser.add_argument("-e", "--extended", default=False, action="store_true", help="Retrieve extended info for each entry. Extended gear includes Effort, Gear, Weather, and Calories. Tthis will SIGNIFICANTLY impact performance since every single entry will require an additional web request (extended data is not available via the API). Posts must not be set to private in dailymile.")
+argparser.add_argument("-g", "--gpx", default=False, action="store_true", help="Download .GPX track associated with an entry.")
 argparser.add_argument("-m", "--maxpages", type=int, default=150, help="Maximum number of API requests to make (to limit http requests during testing)")
 argparser.add_argument("-w", "--disablewarnings", action="store_true", help="Disable urllib3 warnings.")
 args = argparser.parse_args()
@@ -34,6 +35,7 @@ else:
 dm_user = args.USERNAME
 extended_flag = args.extended
 maxpages = args.maxpages
+gpx_flag = args.gpx
 
 if args.disablewarnings:
     requests.packages.urllib3.disable_warnings()
@@ -41,7 +43,7 @@ if args.disablewarnings:
 if extended_flag:
     SLEEP_TIME = 0
 else:
-    SLEEP_TIME = .2
+    SLEEP_TIME = .1
 
 # start at page 1 and go until we run out of data
 page = 1
@@ -192,7 +194,39 @@ while (r.status_code == 200) and (r_json["entries"]):
             entry_dict[id].append("")  # gear
             entry_dict[id].append("")  # weather
             entry_dict[id].append("")  # calories
-            
+
+        # GPX files are downloaded individually to the local filesystem (not embedded in the columnar data)
+        if gpx_flag:
+            www_url_entry = "http://www.dailymile.com/people/" + dm_user + "/entries/" + str(id)
+            logging.debug("Checking for GPX track for entry " + www_url_entry)
+            r = requests.get(www_url_entry)
+            r.raise_for_status()
+            soup = BeautifulSoup(r.content, "html.parser")
+
+            div_route = soup.find('div', attrs={'id' : 'routes_mini'})
+            if div_route:
+                # route_url_suffix is an unqualified link and not a link to a downloadable gpx file.
+                # e.g. '/routes/1965264-running-route'
+                route_url_suffix = div_route.find('a').attrs['href']
+
+                # Construct the actual url needed to download the .gpx file
+                route_url = "http://www.dailymile.com" + route_url_suffix + '.gpx'
+
+                # Construct a local filename consisting of the route id plus the entry id to which
+                # it is related, so they can be linked back to each other after-the-fact.
+                # <route_id>.<entry_id>.gpx      e.g. 1965264-running-route.38403528.gpx
+                route_local_filename = route_url_suffix.split('/')[-1] + '.{0}.gpx'.format(id)
+
+
+                logging.info("Local GPX file will be saved to: {0}".format(route_local_filename))
+
+                with open(route_local_filename,'w') as file_gpx_out:
+                    try:
+                        gpx = requests.get(route_url)
+                        gpx.raise_for_status()
+                        file_gpx_out.write(gpx.content)
+                    except:
+                        logger.warning("Error downloading or writing GPX file for entry {0} from {1}".format(id,route_url))                 
     page+=1
     if page > maxpages:
         logging.warning("Stopped processing. Hit maxpages limit. Use -m to set a larger value.")
@@ -217,7 +251,7 @@ while (r.status_code == 200) and (r_json["entries"]):
             elif r.status_code == 503:
                 logging.error("May have hit Requests per hour limit. Please retry later. Received: " + str(e))
                 abort = True
-                break # out of retries loop
+                break # out of the retries loop
             else:
                 retries-=1
                 logging.error("Error on GET request. Retrying Shortly... Error received: " + str(e))
@@ -226,7 +260,7 @@ while (r.status_code == 200) and (r_json["entries"]):
         r_json=r.json()
     else:
         logging.error("Out of retries or fatal error occurred.")
-        break  # out of downloads loop
+        break  # out of the downloads loop
 
 # The ids look like sequential numbers, sorting by id may go a long way towards getting the entries in chronological order
 sorted_keys = sorted(entry_dict.keys())
@@ -234,7 +268,7 @@ sorted_keys = sorted(entry_dict.keys())
 logging.info("Total number of entries: "+str(len(sorted_keys)))
 logging.info("Writing to output file: " + outputfile)
 
-# write the data to csv     
+# write the data to tsv     
 with open(outputfile,"a") as f:
     writer = UnicodeWriter(f,dialect='excel-tab')
     for key in sorted_keys:
