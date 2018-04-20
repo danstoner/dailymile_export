@@ -43,7 +43,7 @@ if args.disablewarnings:
 if extended_flag:
     SLEEP_TIME = 0
 else:
-    SLEEP_TIME = .1
+    SLEEP_TIME = 0.1
 
 # start at page 1 and go until we run out of data
 page = 1
@@ -212,10 +212,10 @@ while (r.status_code == 200) and (r_json["entries"]):
                 # Construct the actual url needed to download the .gpx file
                 route_url = "http://www.dailymile.com" + route_url_suffix + '.gpx'
 
-                # Construct a local filename consisting of the route id plus the entry id to which
+                # Construct a local filename that includes the route id plus the entry id to which
                 # it is related, so they can be linked back to each other after-the-fact.
-                # <route_id>.<entry_id>.gpx      e.g. 1965264-running-route.38403528.gpx
-                route_local_filename = route_url_suffix.split('/')[-1] + '.{0}.gpx'.format(id)
+                # <username>.<route_id>.<entry_id>.gpx      e.g. danstoner.1965264-running-route.38403528.gpx
+                route_local_filename = '{0}.'.format(dm_user) + route_url_suffix.split('/')[-1] + '.{0}.gpx'.format(id)
 
 
                 logging.info("Local GPX file will be saved to: {0}".format(route_local_filename))
