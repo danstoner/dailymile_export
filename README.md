@@ -6,9 +6,9 @@ Export entries from dailymile using the API.
 http://www.dailymile.com/api/documentation
 
 
-The python script dailymile_export_to_tsv.py is functional and provides export to tab-delimited file (.tsv).
+The python script dailymile_export_to_tsv.py is the preferred and fully-functional edition of the software. The output format is tab-delimited file (.tsv).
 
-The perl 5 script dailymile_export_to_csv.pl is functional and provides export to csv-delimited file (.csv).
+The perl 5 script dailymile_export_to_csv.pl is less functional. The output format is csv-delimited file (.csv).
 
 [Releases] (https://github.com/danstoner/dailymile_export/releases/latest) are considered stable. 
 
@@ -21,7 +21,8 @@ The master branch may include experimental and broken features.
 
 ```
 $ python dailymile_export_to_tsv.py --help
-usage: dailymile_export_to_tsv.py [-h] [-d] [-e] [-m MAXPAGES] [-w] USERNAME
+usage: dailymile_export_to_tsv.py [-h] [-d] [-e] [-g] [-m MAXPAGES] [-w]
+                                  USERNAME
 
 Script to download entries from the dailymile API for a particular user into a
 tab-delimited file.
@@ -33,16 +34,18 @@ optional arguments:
   -h, --help            show this help message and exit
   -d, --debug           Enable debug level logging.
   -e, --extended        Retrieve extended info for each entry. Extended gear
-                        includes Effort, Gear, Weather, and Calories. Tthis
+                        includes Effort, Gear, Weather, and Calories. This
                         will SIGNIFICANTLY impact performance since every
                         single entry will require an additional web request
                         (extended data is not available via the API). Posts
                         must not be set to private in dailymile.
+  -g, --gpx             Download the .GPX track for each entry.
   -m MAXPAGES, --maxpages MAXPAGES
                         Maximum number of API requests to make (to limit http
                         requests during testing)
   -w, --disablewarnings
                         Disable urllib3 warnings.
+
 ```
 
 Sample test fetching only 2 pages of entries and included extended info:
@@ -142,18 +145,11 @@ Usage: dailymile_export_to_tsv.pl [OPTIONS] <PARAMETERS>
 
 The built-in export feature of dailymile is abysmal.
 
-The dailymile website export only includes a small number of the available data fields 
-(date,activity_type,distance,time,felt,elevation_gain). I have spent a lot of time over
+The dailymile website's export only includes a small number of the available data fields 
+(date,activity_type,distance,time,felt,elevation_gain). I spent a lot of time over
 the years using dailymile as my serious runner training log. I want to be able to get
 my data out (and be able to analyze it with my own tools, etc.).
 
-## Future
-
-I am writing versions of the script in other languages for personal learning and comparison.
-
-Eventually I hope to include additional Tags and other ancillary data.
-
-I have received a request to export GPS tracks, so I will probably look into that as well.
 
 ## Feedback?  
 
