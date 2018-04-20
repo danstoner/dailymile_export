@@ -10,7 +10,7 @@ The python script dailymile_export_to_tsv.py is the preferred and fully-function
 
 The perl 5 script dailymile_export_to_csv.pl is less functional. The output format is csv-delimited file (.csv).
 
-[Releases] (https://github.com/danstoner/dailymile_export/releases/latest) are considered stable. 
+[Releases](https://github.com/danstoner/dailymile_export/releases/latest) are considered stable. 
 
 The master branch may include experimental and broken features.
 
