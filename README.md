@@ -1,6 +1,12 @@
 dailymile_export
 ================
 
+
+THIS REPO IS NOW ABANDONED.  DAILYMILE HAS SHUTDOWN THEIR SERVICE.
+==================================================================
+
+
+
 Export entries from dailymile using the API.
 
 http://www.dailymile.com/api/documentation
