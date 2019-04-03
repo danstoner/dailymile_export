@@ -6,6 +6,8 @@ THIS REPO IS NOW ABANDONED.  DAILYMILE HAS SHUTDOWN THEIR SERVICE.
 ==================================================================
 
 
+![dailymile shutdown screenshot](http://thatlinuxbox.com/images/dailymile_shutdown.png)
+
 
 Export entries from dailymile using the API.
 
